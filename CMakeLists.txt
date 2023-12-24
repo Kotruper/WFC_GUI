@@ -28,7 +28,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         .gitignore tile.cpp tile.h  CMakeLists.txt.user fileprint.png main.cpp qt4logo.png rotateleft.png rotateright.png view.cpp view.h wfc_gui.cpp wfc_gui.h wfc_gui.ui WFC_GUI_en_GB.ts zoomin.png zoomout.png
-        tilepatterncreator.h tilepatterncreator.cpp    )
+        tilepatterncreator.h tilepatterncreator.cpp
+        wfc.h wfc.cpp    )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET WFC_GUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)

@@ -7,29 +7,7 @@
 #include <QColor>
 #include <QGraphicsItem>
 
-class Tile;
-
-class TileGraphicsItem : public QGraphicsItem
-{
-public:
-    TileGraphicsItem(const QImage &image, int x, int y);
-
-    QRectF boundingRect() const override;
-    QPainterPath shape() const override;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *item, QWidget *widget) override;
-/*
-protected:
-    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
-    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
-*/
-private:
-    int x;
-    int y;
-    QImage image; //TODO
-    Tile *refTile;
-    QList<QPointF> stuff;
-};
+//Should seperate tile and pattern?
 
 class Tile
 {
@@ -53,6 +31,26 @@ public:
     bool operator== (Tile &tile);
     bool operator== (QImage &image);
     bool operator== (const QImage &image) const;
+    static void displayTiles(QList<Tile> tiles, int x, int y);
+};
+
+class TileGraphicsItem : public QGraphicsItem
+{
+public:
+    TileGraphicsItem(const Tile &tile);
+
+    QRectF boundingRect() const override;
+    QPainterPath shape() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *item, QWidget *widget) override;
+    /*
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+*/
+private:
+    Tile refTile;
+    QList<QPointF> stuff; //what
 };
 
 class Pattern
@@ -65,10 +63,38 @@ public:
 
     int id;
     QString hash;
-    QList<short> tileIDs;
+    QList<short> tileIDs; //pattern is a square, starting from the top left corner
     int size;
     qreal weight;
     void setWeight(qreal);
+    void incrementWeight();
+    bool operator== (const Pattern &pattern) const;
+    bool operator== (Pattern &pattern);
+    bool operator== (QList<short> &list);
+    bool operator== (const QList<short> &list) const;
+
+    QVector2D indexToVector(int index);
+    static void displayPatterns(QList<Pattern> patterns, int x, int y);
+};
+
+class PatternGraphicsItem : public QGraphicsItem
+{
+public:
+    PatternGraphicsItem(const Pattern &pattern, const QList<Tile> &tiles);
+
+    QRectF boundingRect() const override;
+    QPainterPath shape() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *item, QWidget *widget) override;
+    /*
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+*/
+private:
+    Pattern refPattern;
+    QList<Tile> tileset;
+    QList<QPointF> stuff; //what
 };
 
 #endif // TILE_H

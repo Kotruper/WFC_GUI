@@ -19,14 +19,14 @@ public:
     WFC_GUI(QWidget *parent = nullptr);
     ~WFC_GUI();
 
+signals:
+
+
 private slots:
     void on_selectFileButton_clicked();
 
-    void on_generateTilesButton_clicked();
-
 private:
     Ui::WFC_GUI *ui;
-    QString filename;
 
     void setupMatrix();
     void populateScene();

@@ -32,16 +32,10 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     ui->frame_2->setLayout(layout2);
     creatorView->view()->setScene(creatorScene);
 
-    //ui->graphicsView->setScene(new QGraphicsScene(this));
+    tpCreator = new TilePatternCreator(creatorView, this);
 
-    int zoomScale = 4;
-    qreal scale = qPow(qreal(2), (zoomScale - 250) / qreal(50));
-
-    QTransform matrix;
-    matrix.scale(scale, scale);
-    //ui->graphicsView->setTransform(matrix);
-
-    tpCreator = new TilePatternCreator(this);
+    connect(ui->generateTilesButton, SIGNAL(clicked()), tpCreator, SLOT(createTiles()));
+    connect(ui->generatePatternsButton, SIGNAL(clicked()), tpCreator, SLOT(createPatterns()));
 }
 
 WFC_GUI::~WFC_GUI()
@@ -51,16 +45,17 @@ WFC_GUI::~WFC_GUI()
 
 void WFC_GUI::on_selectFileButton_clicked()
 {
-    filename = QFileDialog::getOpenFileName(this,tr("Open Image"), "/.", tr("Image files (*.png *.jpg *.bmp)"));
-    QImage *img = new QImage(filename);
-    creatorScene->addPixmap(QPixmap::fromImage(*img));
+    QString filename = QFileDialog::getOpenFileName(this,tr("Open Image"), "/.", tr("Image files (*.png *.jpg *.bmp)"));
+    tpCreator->setImage(filename);
 }
 
 void WFC_GUI::populateScene()
 {
-    auto imageset = new QList<QImage*>();
-    imageset->append(new QImage(":/fileprint.png"));
-    imageset->append(new QImage(":/rotateleft.png"));
+    auto imageset = new QList<Tile>();
+    //imageset->append(new QImage(":/fileprint.png"));
+    //imageset->append(new QImage(":/rotateleft.png"));
+    imageset->append(Tile(QImage(":/fileprint.png"),1,0));
+    imageset->append(Tile(QImage(":/rotateleft.png"),1,1));
     auto generator = new QRandomGenerator(2);
     // Populate scene
     int xx = 0;
@@ -73,25 +68,9 @@ void WFC_GUI::populateScene()
             //qreal y = (j + 7000) / 14000.0;
 
             //QColor color(image.pixel(int(image.width() * x), int(image.height() * y)));
-            QGraphicsItem *item = new TileGraphicsItem(*imageset->at(qRound(generator->bounded(1.0))), xx, yy);
+            QGraphicsItem *item = new TileGraphicsItem(imageset->at(qRound(generator->bounded(1.0))));
             item->setPos(QPointF(i, j));
             scene->addItem(item);
         }
     }
 }
-
-
-void WFC_GUI::on_generateTilesButton_clicked()
-{
-    int tileSize = 5;
-    QPixmap pmap(dynamic_cast<QGraphicsPixmapItem*>(creatorScene->items().last())->pixmap());
-    QImage baseImage = pmap.toImage();
-    QList<Tile> tiles = tpCreator->createTiles(baseImage, tileSize);
-    for (int i = 0; i < tiles.size(); ++i) {
-        QGraphicsItem *item = new TileGraphicsItem(tiles.at(i).image,i,0);
-        item->setPos(QPointF(i*(tileSize+1), -20));
-        creatorScene->addItem(item);
-        qDebug()<<tiles[i].id;
-    }
-}
-

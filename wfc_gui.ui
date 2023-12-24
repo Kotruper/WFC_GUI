@@ -674,11 +674,24 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="QPushButton" name="selectFileButton">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -692,6 +705,13 @@
           <widget class="QPushButton" name="generateTilesButton">
            <property name="text">
             <string>Generate Tiles</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="generatePatternsButton">
+           <property name="text">
+            <string>Generate Patterns</string>
            </property>
           </widget>
          </item>
@@ -761,6 +781,18 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>comboBox</tabstop>
+  <tabstop>checkBox</tabstop>
+  <tabstop>doubleSpinBox</tabstop>
+  <tabstop>spinBox_2</tabstop>
+  <tabstop>spinBox</tabstop>
+  <tabstop>graphicsView</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>selectFileButton</tabstop>
+  <tabstop>generateTilesButton</tabstop>
+  <tabstop>tilePixelSizeInput</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
