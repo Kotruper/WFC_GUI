@@ -15,10 +15,6 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
 set(TS_FILES WFC_GUI_en_GB.ts)
 
 set(PROJECT_SOURCES
-        main.cpp
-        wfc_gui.cpp
-        wfc_gui.h
-        wfc_gui.ui
         images.qrc
         ${TS_FILES}
 )
@@ -27,9 +23,17 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(WFC_GUI
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        .gitignore tile.cpp tile.h  CMakeLists.txt.user fileprint.png main.cpp qt4logo.png rotateleft.png rotateright.png view.cpp view.h wfc_gui.cpp wfc_gui.h wfc_gui.ui WFC_GUI_en_GB.ts zoomin.png zoomout.png
+        tile.cpp tile.h main.cpp view.cpp view.h wfc_gui.cpp wfc_gui.h wfc_gui.ui
         tilepatterncreator.h tilepatterncreator.cpp
-        wfc.h wfc.cpp    )
+        wfc.h wfc.cpp )
+
+#    if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+#        qt_add_executable(WFC_GUI
+#            MANUAL_FINALIZATION
+#            ${PROJECT_SOURCES}
+#            tile.cpp tile.h fileprint.png main.cpp qt4logo.png rotateleft.png rotateright.png view.cpp view.h wfc_gui.cpp wfc_gui.h wfc_gui.ui WFC_GUI_en_GB.ts zoomin.png zoomout.png
+#            tilepatterncreator.h tilepatterncreator.cpp
+#            wfc.h wfc.cpp    )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET WFC_GUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
