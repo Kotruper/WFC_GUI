@@ -7,13 +7,14 @@
 #include "wfc_gui.h"
 #include "./ui_wfc_gui.h"
 #include "QFileDialog"
+#include "tilepatterncreator.h"
 
 WFC_GUI::WFC_GUI(QWidget *parent)
     : QWidget(parent), ui(new Ui::WFC_GUI),  scene(new QGraphicsScene(this))
 {
     ui->setupUi(this);
 
-    populateScene();
+    //populateScene();
 
     View *view = new View("Tiles view");
     view->view()->setScene(scene);
@@ -21,6 +22,8 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(view);
     ui->frame->setLayout(layout);
+
+    wfc_generator = new wfc(view,this);
 
     setWindowTitle(tr("Wave Function Collapse GUI"));
 
@@ -36,6 +39,9 @@ WFC_GUI::WFC_GUI(QWidget *parent)
 
     connect(ui->generateTilesButton, SIGNAL(clicked()), tpCreator, SLOT(createTiles()));
     connect(ui->generatePatternsButton, SIGNAL(clicked()), tpCreator, SLOT(createPatterns()));
+    connect(ui->exportPatternsButton, SIGNAL(clicked()), tpCreator, SLOT(exportPatterns()));
+    connect(tpCreator, &TilePatternCreator::patternsSignal, wfc_generator, &wfc::setPatterns);
+    connect(ui->generateGridButton, SIGNAL(clicked()), wfc_generator, SLOT(generate()));
 }
 
 WFC_GUI::~WFC_GUI()
@@ -49,7 +55,7 @@ void WFC_GUI::on_selectFileButton_clicked()
     tpCreator->setImage(filename);
 }
 
-void WFC_GUI::populateScene()
+void WFC_GUI::populateScene() //test function
 {
     auto imageset = new QList<Tile>();
     //imageset->append(new QImage(":/fileprint.png"));

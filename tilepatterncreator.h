@@ -24,11 +24,13 @@ public:
     QList<Tile> createTiles(QImage baseImage, int tileSize);
 
 signals:
+    void patternsSignal(QList<Tile> tiles, QList<Pattern> patterns);
 
 public slots:
     void createPatterns();
     void createTiles();
     void setImage(QString filename);
+    void exportPatterns();
 };
 
 #endif // TILEPATTERNCREATOR_H

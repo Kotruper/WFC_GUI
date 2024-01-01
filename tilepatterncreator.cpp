@@ -103,3 +103,7 @@ void TilePatternCreator::setImage(QString filename){
     this->baseImage.load(filename);
     creatorView->view()->scene()->addPixmap(QPixmap::fromImage(baseImage));
 }
+
+void TilePatternCreator::exportPatterns(){
+    emit patternsSignal(this->tiles, this->patterns);
+}

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "tile.h"
 #include "tilepatterncreator.h"
+#include "wfc.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class WFC_GUI; }
@@ -40,5 +41,6 @@ private:
     QList<short> tileMap;
 
     TilePatternCreator* tpCreator;
+    wfc* wfc_generator;
 };
 #endif // WFC_GUI_H

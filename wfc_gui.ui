@@ -630,7 +630,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="generateGridButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -751,6 +751,13 @@
            </property>
           </spacer>
          </item>
+         <item>
+          <widget class="QPushButton" name="exportPatternsButton">
+           <property name="text">
+            <string>Export</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -788,7 +795,7 @@
   <tabstop>spinBox_2</tabstop>
   <tabstop>spinBox</tabstop>
   <tabstop>graphicsView</tabstop>
-  <tabstop>pushButton</tabstop>
+  <tabstop>generateGridButton</tabstop>
   <tabstop>selectFileButton</tabstop>
   <tabstop>generateTilesButton</tabstop>
   <tabstop>tilePixelSizeInput</tabstop>
