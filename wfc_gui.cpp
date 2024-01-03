@@ -41,7 +41,11 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(ui->generatePatternsButton, SIGNAL(clicked()), tpCreator, SLOT(createPatterns()));
     connect(ui->exportPatternsButton, SIGNAL(clicked()), tpCreator, SLOT(exportPatterns()));
     connect(tpCreator, &TilePatternCreator::patternsSignal, wfc_generator, &wfc::setPatterns);
+
     connect(ui->generateGridButton, SIGNAL(clicked()), wfc_generator, SLOT(generate()));
+    connect(ui->generateStepButton, &QPushButton::clicked, wfc_generator, &wfc::generateOneStep);
+    connect(ui->gridWidthSelector, &QSpinBox::valueChanged, wfc_generator, &wfc::changeGridWidth);
+    connect(ui->gridHeightSelector, &QSpinBox::valueChanged, wfc_generator, &wfc::changeGridHeight);
 }
 
 WFC_GUI::~WFC_GUI()

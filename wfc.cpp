@@ -14,16 +14,17 @@ QList<TileSlot> wfc::clearGrid(const QList<Tile> &tiles, int width, int height){
     int tileAmount = tiles.size(); //if any tiles are disabled, make sure to 0 out those ones
     for(int y=0; y < height; y++){
         for(int x=0; x < width; x++){
-            newGrid.append(TileSlot{QBitArray(tileAmount, true),x,y});
+            newGrid.append(TileSlot{QBitArray(tileAmount, true), QPoint{x,y}});
         }
     }
-    TileSlot &middleSlot = newGrid[(height*width)/2];
+    QPoint middleSlot = QPoint{width/2, height/2};
     this->collapsableSlots.clear();
-    this->collapsableSlots.append(std::move(middleSlot));
+    this->collapsableSlots.append(middleSlot);
     return newGrid;
 }
 
-void wfc::collapseSlot(TileSlot &slot, const QList<Tile> &tiles){
+void wfc::collapseSlot(QPoint toCollapse, const QList<Tile> &tiles){ //TODO: will need to deal with empty slots
+    TileSlot &slot = getSlotAt(toCollapse);
     QList<short> possibleIds;
     QList<double> weightLimits = {0.0};
     for(int id = 0; id < tiles.size(); id++){
@@ -34,36 +35,39 @@ void wfc::collapseSlot(TileSlot &slot, const QList<Tile> &tiles){
     }
     double randomWeight = QRandomGenerator::global()->bounded(weightLimits.last()); //TODO: add random seed
     auto tileIndex = std::distance(weightLimits.begin(), std::upper_bound(weightLimits.begin(),weightLimits.end(),randomWeight)) - 1;
-
-    slot.collapsedId = tileIndex;
+    short tileId = possibleIds[tileIndex];
+    slot.collapsedId = tileId;
     slot.tileIdBitset = QBitArray(slot.tileIdBitset.size());
-    slot.tileIdBitset.setBit(possibleIds.at(tileIndex));
+    slot.tileIdBitset.setBit(tileId);
 }
 
-TileSlot& wfc::getSlotAt(int x, int y){
-    return grid[(x + y*this->gridWidth)];
+TileSlot& wfc::getSlotAt(QPoint pos){
+    return grid[(pos.x() + pos.y()*this->gridWidth)];
 }
 
-bool wfc::isInBounds(int x, int y){
-    return (x>=0) && (x<gridWidth) && (y>=0) && (y<gridHeight);
+bool wfc::isInBounds(QPoint pos){
+    return (pos.x()>=0) && (pos.x()<gridWidth) && (pos.y()>=0) && (pos.y()<gridHeight);
 }
 
-QList<Coords> wfc::getAffectedPatternCoords(const TileSlot &t, int patternSize){ //NxN coords, top left to the Slot
-    QList<Coords> resultCoords;
-    for(int y = -patternSize; y <= 0; y++){
-        for(int x = -patternSize; x <= 0; x++){
-            resultCoords.append(Coords{t.x + x, t.y + y});
+QList<QPoint> wfc::getAffectedPatternCoords(const QPoint &p, int patternSize){ //NxN coords, with slot at p in the bottom right
+    QList<QPoint> resultCoords;
+    for(int y = -patternSize + 1; y <= 0; y++){
+        for(int x = -patternSize + 1; x <= 0; x++){
+            resultCoords.append(QPoint{x,y} + p);
         }
     }
     return resultCoords;
 }
 
-QList<TileSlot> wfc::getPatternTiles(const Coords &c, const TileSlot &dummy, int patternSize, QList<TileSlot> &grid){ //NxN coords, bottom right of the Coords
+QList<TileSlot> wfc::getPatternTiles(const QPoint &p, int patternSize, const QList<TileSlot> &grid){ //NxN coords, with point p at the top left
+    static TileSlot dummy = {QBitArray{grid.first().tileIdBitset.size(),true}, {-1,-1}}; //Dummy Slot, for applying patterns on out of bounds tiles
+
     QList<TileSlot> resultSlots;
-    for(int y = c.y; y < c.y + patternSize; y++){
-        for(int x = c.x; x < c.x + patternSize; x++){
-            if(isInBounds(x,y))
-                resultSlots.append(getSlotAt(x,y)); //TODO: addDummySlots
+
+    for(int y = p.y(); y < p.y() + patternSize; y++){
+        for(int x = p.x(); x < p.x() + patternSize; x++){
+            if(isInBounds({x,y}))
+                resultSlots.append(getSlotAt({x,y})); //TODO: addDummySlots
             else
                 resultSlots.append(dummy);
         }
@@ -85,20 +89,18 @@ void updateCube(const Pattern &p, QList<QBitArray> &bitCube){
     }
 }
 
-QList<TileSlot> wfc::propagateUpdate(QList<TileSlot> &grid, const TileSlot &collapsed, const QList<Pattern> &patterns, const QList<Tile> &tiles){ //should probably disentagle this mess. unless it works, then fuck it
+QList<QPoint> wfc::propagateUpdate(QList<TileSlot> &grid, const QPoint &collapsed, const QList<Pattern> &patterns, const QList<Tile> &tiles){ //should probably disentagle this mess. unless it works, then fuck it
     int patternSize = patterns.first().size;
-    QList<TileSlot> updatedSlots = {collapsed}; //maybe set?
-    QList<TileSlot> resultUpdatedSlots;
-    TileSlot dummySlot = {QBitArray{tiles.size(),true},-1,-1};
-    auto isSlotDummy = [](TileSlot t){return t.x < 0;};
+    QList<QPoint> updatedSlots = {collapsed}; //maybe set?
+    QList<QPoint> resultUpdatedSlots;
 
     while(!updatedSlots.empty()){
 
-        QList<Coords> testPatternCoords = getAffectedPatternCoords(updatedSlots.first(), patternSize);
-        resultUpdatedSlots.append(updatedSlots.front());
-        updatedSlots.pop_front();
-        for(auto c: testPatternCoords){
-            QList<TileSlot> slotsInPattern = getPatternTiles(c, dummySlot, patternSize, grid);
+        QList<QPoint> testPatternCoords = getAffectedPatternCoords(updatedSlots.first(), patternSize);
+        resultUpdatedSlots.append(updatedSlots.takeFirst());
+
+        for(auto p: testPatternCoords){
+            QList<TileSlot> slotsInPattern = getPatternTiles(p, patternSize, grid);
             QList<QBitArray> oldBitCube;
             for(auto t:slotsInPattern){
                 oldBitCube.append(t.tileIdBitset); //fills the bitCube
@@ -109,9 +111,11 @@ QList<TileSlot> wfc::propagateUpdate(QList<TileSlot> &grid, const TileSlot &coll
                     updateCube(p, newBitCube);
             }
             for(int i = 0; i < patternSize * patternSize; i++){ //update slots
-                if((oldBitCube.at(i) != newBitCube.at(i)) && !isSlotDummy(slotsInPattern[i])){
-                    slotsInPattern[i].tileIdBitset = newBitCube.at(i);
-                    updatedSlots.append(slotsInPattern[i]);
+                QPoint slotPos = slotsInPattern[i].pos;
+                if((oldBitCube.at(i) != newBitCube.at(i)) && isInBounds(slotPos)){
+                    getSlotAt(slotPos).tileIdBitset = newBitCube.at(i);
+                    if(!updatedSlots.contains(slotPos))
+                        updatedSlots.append(slotPos);
                 }
             }
         }
@@ -121,21 +125,23 @@ QList<TileSlot> wfc::propagateUpdate(QList<TileSlot> &grid, const TileSlot &coll
 }
 
 QList<TileSlot> wfc::generateGrid(QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height){
-    qDebug()<<"Began generating grid";
-    while(!collapsableSlots.empty()){
-        TileSlot &toCollapse = collapsableSlots.first();
-        collapsableSlots.pop_front();
+    qDebug()<<"Began generating grid step";
 
-        collapseSlot(toCollapse, tiles);
-        auto updatedSlots(propagateUpdate(grid, toCollapse, patterns, tiles));
-        collapsableSlots.append(updatedSlots);
+    QPoint toCollapse = collapsableSlots.takeFirst();
 
-        displayGrid(grid, tiles, width, height); //TEST
-
-        std::sort(collapsableSlots.begin(),collapsableSlots.end(),
-                  [](const TileSlot &a, const TileSlot &b){return a.tileIdBitset.count(true) < b.tileIdBitset.count(true);}
-                 );
+    collapseSlot(toCollapse, tiles);
+    auto updatedSlots = propagateUpdate(grid, toCollapse, patterns, tiles);
+    for(QPoint sid:updatedSlots){
+        if(!collapsableSlots.contains(sid)) //still doesnt work properly apparently
+            collapsableSlots.append(updatedSlots);
     }
+
+
+    displayGrid(grid, tiles, width, height); //TEST
+
+    std::sort(collapsableSlots.begin(),collapsableSlots.end(),
+              [&](const QPoint &a, const QPoint &b){return getSlotAt(a).tileIdBitset.count(true) < getSlotAt(b).tileIdBitset.count(true);}
+             );
     /*
         while there are uncollapsed (or empty?) slots (in the updated list), do: while(!collapsableSlots.empty())
             get the slot with the lowest entropy (TileSlot &currentSlot = collapsableSlots.first()) <- put in references!
@@ -162,7 +168,7 @@ void wfc::displayGrid(const QList<TileSlot> &grid, const QList<Tile> &tiles, int
         for (auto ts: grid) { //Display the tiles
             if(ts.collapsedId >= 0){
                 QGraphicsItem *item = new TileGraphicsItem(tiles.at(ts.collapsedId));
-                item->setPos(QPointF(ts.x * tileSize, ts.y * tileSize));
+                item->setPos(ts.pos * tileSize);
                 generatorView->view()->scene()->addItem(item);
             }
             //qDebug()<<tiles[ts.collapsedId].id;
@@ -173,11 +179,31 @@ void wfc::generate(){
     if(tiles.empty() || patterns.empty() || (gridWidth <= 0) || (gridHeight <= 0))
         throw("Error");
     this->grid = clearGrid(tiles, gridWidth, gridHeight);
+    while(!collapsableSlots.empty()){
+        qDebug()<<collapsableSlots.size()<<" slots left to collapse";
+        generateGrid(this->grid,this->tiles,this->gridWidth, this->gridHeight);
+    }
+}
+
+void wfc::generateOneStep(){
+    if(tiles.empty() || patterns.empty() || (gridWidth <= 0) || (gridHeight <= 0))
+        throw("Error");
     generateGrid(this->grid,this->tiles,this->gridWidth, this->gridHeight);
 }
 
 void wfc::setPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns){
     this->tiles = newTiles;
     this->patterns = newPatterns;
+    this->grid = clearGrid(tiles, gridWidth, gridHeight);
     qDebug()<<"Received tiles ("<<newTiles.size()<<") and patterns("<<newPatterns.size()<<")";
+}
+
+void wfc::changeGridHeight(int val){
+    if(val > 0)
+        this->gridHeight = val;
+}
+
+void wfc::changeGridWidth(int val){
+    if(val > 0)
+        this->gridWidth = val;
 }
