@@ -37,12 +37,12 @@ WFC_GUI::WFC_GUI(QWidget *parent)
 
     tpCreator = new TilePatternCreator(creatorView, this);
 
-    connect(ui->generateTilesButton, SIGNAL(clicked()), tpCreator, SLOT(createTiles()));
-    connect(ui->generatePatternsButton, SIGNAL(clicked()), tpCreator, SLOT(createPatterns()));
-    connect(ui->exportPatternsButton, SIGNAL(clicked()), tpCreator, SLOT(exportPatterns()));
+    //connect(ui->generateTilesButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createTiles);
+    //connect(ui->generatePatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createPatterns);
+    //connect(ui->exportPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::exportPatterns);
     connect(tpCreator, &TilePatternCreator::patternsSignal, wfc_generator, &wfc::setPatterns);
 
-    connect(ui->generateGridButton, SIGNAL(clicked()), wfc_generator, SLOT(generate()));
+    connect(ui->generateGridButton, &QPushButton::clicked, wfc_generator, &wfc::generate);
     connect(ui->generateStepButton, &QPushButton::clicked, wfc_generator, &wfc::generateOneStep);
     connect(ui->gridWidthSelector, &QSpinBox::valueChanged, wfc_generator, &wfc::changeGridWidth);
     connect(ui->gridHeightSelector, &QSpinBox::valueChanged, wfc_generator, &wfc::changeGridHeight);

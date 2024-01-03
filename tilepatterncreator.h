@@ -20,8 +20,8 @@ public:
     int tileSize;
     int patternSize;
 
-    QList<Pattern> createPatterns(QList<short> idMap, int patternSize);
-    QList<Tile> createTiles(QImage baseImage, int tileSize);
+    QList<Pattern> generatePatterns(QList<short> idMap, int patternSize);
+    QList<Tile> generateTiles(QImage baseImage, int tileSize);
 
 signals:
     void patternsSignal(QList<Tile> tiles, QList<Pattern> patterns);

@@ -10,7 +10,7 @@ TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
 
 void TilePatternCreator::createTiles(){
     //qDebug("got into creating");
-    this->tiles = createTiles(baseImage, tileSize);
+    this->tiles = generateTiles(baseImage, tileSize);
 
     auto displayTiles = [&](QList<Tile> tiles, int yOffset){
         for (int i = 0; i < tiles.size(); ++i) { //Display the tiles
@@ -23,7 +23,7 @@ void TilePatternCreator::createTiles(){
     displayTiles(this->tiles, 20);
 }
 
-QList<Tile> TilePatternCreator::createTiles(QImage baseImage, int tileSize){ //sideEfect: fills the idMap
+QList<Tile> TilePatternCreator::generateTiles(QImage baseImage, int tileSize){ //sideEfect: fills the idMap
     QList<Tile> newTiles{};
 
     int mapHeight = baseImage.height() / tileSize;
@@ -51,7 +51,7 @@ QList<Tile> TilePatternCreator::createTiles(QImage baseImage, int tileSize){ //s
 }
 
 void TilePatternCreator::createPatterns(){
-    this->patterns = createPatterns(idMap, patternSize);
+    this->patterns = generatePatterns(idMap, patternSize);
     qDebug("got to patterns");
 
     auto displayPatterns = [&](QList<Pattern> patterns, int yOffset){
@@ -65,7 +65,7 @@ void TilePatternCreator::createPatterns(){
     displayPatterns(this->patterns, 30);
 }
 
-QList<Pattern> TilePatternCreator::createPatterns(QList<short> IDmap, int patternSize){
+QList<Pattern> TilePatternCreator::generatePatterns(QList<short> IDmap, int patternSize){
 
 
     QList<Pattern> newPatterns{};
