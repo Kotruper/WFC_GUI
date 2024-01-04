@@ -10,32 +10,26 @@
 #include "tilepatterncreator.h"
 
 WFC_GUI::WFC_GUI(QWidget *parent)
-    : QWidget(parent), ui(new Ui::WFC_GUI),  scene(new QGraphicsScene(this))
+    : QWidget(parent), ui(new Ui::WFC_GUI),  scene(new QGraphicsScene(this)), creatorScene(new QGraphicsScene(this))
 {
     ui->setupUi(this);
-
-    //populateScene();
-
-    View *view = new View("Tiles view");
-    view->view()->setScene(scene);
-
-    QHBoxLayout *layout = new QHBoxLayout;
-    layout->addWidget(view);
-    ui->frame->setLayout(layout);
-
-    wfc_generator = new wfc(view,this);
-
     setWindowTitle(tr("Wave Function Collapse GUI"));
 
-    creatorScene = new QGraphicsScene(this); //MOVE
+    View *wfcView = new View("Tiles view");
+    wfcView->view()->setScene(scene);
+    wfc_generator = new wfc(wfcView,this);
+
+    QHBoxLayout *wfc_layout = new QHBoxLayout;
+    wfc_layout->addWidget(wfcView);
+    ui->wfc_frame->setLayout(wfc_layout);
+
     View *creatorView = new View("Pattern creator view");
-
-    QHBoxLayout *layout2 = new QHBoxLayout; //help
-    layout2->addWidget(creatorView);
-    ui->frame_2->setLayout(layout2);
     creatorView->view()->setScene(creatorScene);
-
     tpCreator = new TilePatternCreator(creatorView, this);
+
+    QHBoxLayout *tpc_layout = new QHBoxLayout; //help
+    tpc_layout->addWidget(creatorView);
+    ui->tpc_frame->setLayout(tpc_layout);
 
     //connect(ui->generateTilesButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createTiles);
     //connect(ui->generatePatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createPatterns);

@@ -24,7 +24,7 @@ void GraphicsView::wheelEvent(QWheelEvent *e)
 View::View(const QString &name, QWidget *parent)
     : QFrame(parent)
 {
-    setFrameStyle(Sunken | StyledPanel);
+    setFrameStyle(NoFrame);
     graphicsView = new GraphicsView(this);
     graphicsView->setRenderHint(QPainter::Antialiasing, false);
     graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
@@ -117,11 +117,11 @@ View::View(const QString &name, QWidget *parent)
     //labelLayout->addWidget(antialiasButton);
 
     QGridLayout *topLayout = new QGridLayout;
-    topLayout->addLayout(labelLayout, 0, 0);
-    topLayout->addWidget(graphicsView, 1, 0);
-    topLayout->addLayout(zoomSliderLayout, 1, 1);
+    //topLayout->addLayout(labelLayout, 0, 0);
+    topLayout->addWidget(graphicsView, 0, 0);
+    topLayout->addLayout(zoomSliderLayout, 0, 1);
     //topLayout->addLayout(rotateSliderLayout, 2, 0);
-    topLayout->addWidget(resetButton, 2, 1);
+    topLayout->addWidget(resetButton, 0, 1, Qt::AlignmentFlag::AlignRight); //I guess it works
     setLayout(topLayout);
 
     connect(resetButton, &QAbstractButton::clicked, this, &View::resetView);

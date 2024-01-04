@@ -33,7 +33,7 @@ private:
     void populateScene();
 
     QGraphicsScene *scene;
-    QGraphicsScene *creatorScene; //MOVE
+    QGraphicsScene *creatorScene;
 
     QList<Tile> tileLibrary;
     QList<Pattern> patternLibrary;
