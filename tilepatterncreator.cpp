@@ -15,12 +15,12 @@ void TilePatternCreator::createTiles(){
     auto displayTiles = [&](QList<Tile> tiles, int yOffset){
         for (int i = 0; i < tiles.size(); ++i) { //Display the tiles
             QGraphicsItem *item = new TileGraphicsItem(tiles.at(i));
-            item->setPos(QPointF(i*(tileSize+1), -20));
+            item->setPos(QPointF(i*(tileSize+1), yOffset));
             creatorView->view()->scene()->addItem(item);
             //qDebug()<<tiles[i].id;
         }
     };
-    displayTiles(this->tiles, 20);
+    displayTiles(this->tiles, -10);
 }
 
 QList<Tile> TilePatternCreator::generateTiles(QImage baseImage, int tileSize){ //sideEfect: fills the idMap
@@ -57,12 +57,12 @@ void TilePatternCreator::createPatterns(){
     auto displayPatterns = [&](QList<Pattern> patterns, int yOffset){
         for (int i = 0; i < patterns.size(); ++i) { //Display the tiles
             QGraphicsItem *item = new PatternGraphicsItem(patterns[i],tiles);
-            item->setPos(QPointF(i*(patternSize*tileSize + 1), yOffset));
+            item->setPos(QPointF(i*(patternSize*tileSize + tileSize), yOffset));
             creatorView->view()->scene()->addItem(item);
             //qDebug()<<tiles[i].id;
         }
     };
-    displayPatterns(this->patterns, 30);
+    displayPatterns(this->patterns, baseImage.height() + 10);
 }
 
 QList<Pattern> TilePatternCreator::generatePatterns(QList<short> IDmap, int patternSize){
@@ -102,12 +102,20 @@ void TilePatternCreator::setImage(QString filename){
     creatorView->view()->scene()->clear();
     this->baseImage.load(filename);
     creatorView->view()->scene()->addPixmap(QPixmap::fromImage(baseImage));
-
-    createTiles();
-    createPatterns();
-    exportPatterns();
 }
 
 void TilePatternCreator::exportPatterns(){
+    creatorView->view()->scene()->clear();
+    creatorView->view()->scene()->addPixmap(QPixmap::fromImage(baseImage));
+    createTiles();
+    createPatterns();
     emit patternsSignal(this->tiles, this->patterns);
+}
+
+void TilePatternCreator::setPatternSize(int size){
+    this->patternSize = size;
+}
+
+void TilePatternCreator::setTileSize(int size){
+    this->tileSize = size;
 }

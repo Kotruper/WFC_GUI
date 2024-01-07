@@ -31,6 +31,7 @@ View::View(const QString &name, QWidget *parent)
     graphicsView->setOptimizationFlags(QGraphicsView::DontSavePainterState);
     graphicsView->setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
     graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    graphicsView->setBackgroundBrush(QBrush(Qt::BrushStyle::Dense7Pattern));
 
     int size = style()->pixelMetric(QStyle::PM_ToolBarIconSize);
     QSize iconSize(size, size);
@@ -49,8 +50,8 @@ View::View(const QString &name, QWidget *parent)
     zoomOutIcon->setIconSize(iconSize);
     zoomSlider = new QSlider;
     zoomSlider->setMinimum(0);
-    zoomSlider->setMaximum(500);
-    zoomSlider->setValue(250);
+    zoomSlider->setMaximum(1000);
+    zoomSlider->setValue(500);
     zoomSlider->setTickPosition(QSlider::TicksRight);
 
     // Zoom slider layout
@@ -83,8 +84,8 @@ View::View(const QString &name, QWidget *parent)
     resetButton->setEnabled(false);
 
     // Label layout
-    QHBoxLayout *labelLayout = new QHBoxLayout;
-    label = new QLabel(name);
+    //QHBoxLayout *labelLayout = new QHBoxLayout;
+    //label = new QLabel(name);
     /*
     label2 = new QLabel(tr("Pointer Mode"));
     selectModeButton = new QToolButton;
@@ -108,8 +109,8 @@ View::View(const QString &name, QWidget *parent)
     pointerModeGroup->addButton(selectModeButton);
     pointerModeGroup->addButton(dragModeButton);
 */
-    labelLayout->addWidget(label);
-    labelLayout->addStretch();
+    //labelLayout->addWidget(label);
+    //labelLayout->addStretch();
     //labelLayout->addWidget(label2);
     //labelLayout->addWidget(selectModeButton);
     //labelLayout->addWidget(dragModeButton);

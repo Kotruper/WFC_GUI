@@ -119,7 +119,7 @@ void PatternGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsIte
 
         Tile tileToDraw = tileset.at(refPattern.tileIDs.at(i));
         QVector2D offset = refPattern.indexToVector(i) * tileToDraw.size;
-        painter->setOpacity(0.5);
+        painter->setOpacity(1);
         painter->drawImage(offset.toPointF(), tileToDraw.image);
     }
 }

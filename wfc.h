@@ -28,7 +28,7 @@ public:
     int gridWidth;
     int gridHeight;
 
-    QList<TileSlot> clearGrid(const QList<Tile> &tiles, int width, int height); //fill whole grid with uncollapsed slots, add middle to collapsable list
+    QList<TileSlot> createEmptyGrid(const QList<Tile> &tiles, int width, int height); //fill whole grid with uncollapsed slots, add middle to collapsable list
     QList<TileSlot> generateGrid(QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height); //the big one
 
     void collapseSlot(QPoint slotPos, const QList<Tile> &tiles); //collapses a slot using weighted random. returns tile id (should use pattern weights too?)
@@ -47,6 +47,7 @@ public slots:
     void setPatterns(QList<Tile> tiles, QList<Pattern> patterns);
     void changeGridHeight(int val);
     void changeGridWidth(int val);
+    void clearGrid();
 
 signals:
 

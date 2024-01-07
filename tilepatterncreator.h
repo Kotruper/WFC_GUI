@@ -31,6 +31,8 @@ public slots:
     void createTiles();
     void setImage(QString filename);
     void exportPatterns();
+    void setTileSize(int size);
+    void setPatternSize(int size);
 };
 
 #endif // TILEPATTERNCREATOR_H

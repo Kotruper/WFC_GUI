@@ -33,13 +33,16 @@ WFC_GUI::WFC_GUI(QWidget *parent)
 
     //connect(ui->generateTilesButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createTiles);
     //connect(ui->generatePatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createPatterns);
-    //connect(ui->exportPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::exportPatterns);
+    connect(ui->exportPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::exportPatterns);
+    connect(ui->tilePixelSizeInput, &QSpinBox::valueChanged, tpCreator, &TilePatternCreator::setTileSize);
+    connect(ui->patternSizeInput, &QSpinBox::valueChanged, tpCreator, &TilePatternCreator::setPatternSize);
     connect(tpCreator, &TilePatternCreator::patternsSignal, wfc_generator, &wfc::setPatterns);
 
     connect(ui->generateGridButton, &QPushButton::clicked, wfc_generator, &wfc::generate);
     connect(ui->generateStepButton, &QPushButton::clicked, wfc_generator, &wfc::generateOneStep);
     connect(ui->gridWidthSelector, &QSpinBox::valueChanged, wfc_generator, &wfc::changeGridWidth);
     connect(ui->gridHeightSelector, &QSpinBox::valueChanged, wfc_generator, &wfc::changeGridHeight);
+    connect(ui->clearGridButton, &QPushButton::clicked, wfc_generator, &wfc::clearGrid);
 }
 
 WFC_GUI::~WFC_GUI()
@@ -49,7 +52,7 @@ WFC_GUI::~WFC_GUI()
 
 void WFC_GUI::on_selectFileButton_clicked()
 {
-    QString filename = QFileDialog::getOpenFileName(this,tr("Open Image"), "/.", tr("Image files (*.png *.jpg *.bmp)"));
+    QString filename = QFileDialog::getOpenFileName(this,tr("Open Image"), "C:\\Users\\kotru\\Documents\\Studia_7\\Inzynierka", tr("Image files (*.png *.jpg *.bmp)"));
     tpCreator->setImage(filename);
 }
 
