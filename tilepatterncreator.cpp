@@ -1,6 +1,5 @@
 #include "tilepatterncreator.h"
 #include "QFileDialog"
-#include "qvectornd.h"
 
 TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     : QObject{parent}, creatorView(view){
