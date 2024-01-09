@@ -24,20 +24,20 @@ public:
     QList<Tile> tiles;
     QList<Pattern> patterns;
     QList<TileSlot> grid;
-    QList<QPoint> collapsableSlots;
+    QList<QPoint> collapseCandidatePos;
     int gridWidth;
     int gridHeight;
 
     QList<TileSlot> createEmptyGrid(const QList<Tile> &tiles, int width, int height); //fill whole grid with uncollapsed slots, add middle to collapsable list
-    QList<TileSlot> generateGrid(QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height); //the big one
+    QList<TileSlot> generateGridStep(QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height); //the big one
 
     void collapseSlot(QPoint slotPos, const QList<Tile> &tiles); //collapses a slot using weighted random. returns tile id (should use pattern weights too?)
     QList<QPoint> propagateUpdate(QList<TileSlot> &grid, const QPoint &collapsed, const QList<Pattern> &patterns, const QList<Tile> &tiles);
     //helpers
     QList<QPoint> getAffectedPatternCoords(const QPoint &p, int patternSize); //return affected pattern coords (ones that contain uncollapsed slots)
     QList<TileSlot> getPatternTiles(const QPoint &p, int patternSize, const QList<TileSlot> &grid);
-    TileSlot& getSlotAt(QPoint pos);
-    bool isInBounds(QPoint pos);
+    TileSlot& getSlotAt(const QPoint &pos);
+    bool isInBounds(const QPoint &pos);
 
     void displayGrid(const QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height);
 
