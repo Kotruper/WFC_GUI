@@ -11,10 +11,8 @@
 
 class Tile
 {
-private:
-    static int commonID;
 public:
-    Tile(QImage image, int size, int id = commonID++);
+    Tile(int id, QImage image, int size);
     int id;
     //hash?
     QString hash;
@@ -26,7 +24,7 @@ public:
     //surrounded weights?
     //edges?
     void setWeight(qreal newWeight);
-    void incrementWeight();
+    void incrementWeight(int incVal = 1);
     bool operator== (const Tile &tile) const;
     bool operator== (Tile &tile);
     bool operator== (QImage &image);
@@ -55,26 +53,28 @@ private:
 
 class Pattern
 {
-private:
-    static int commonID;
+    using CompatibilityList = QList<QList<QList<short>>>; //dy, dx, patternIDs?
 
 public:
-    Pattern(const QList<short> tileIDs, int size = 3, int weight = 1, int id = commonID++);
+    Pattern(int id, QList<short> tileIDs, int size, int weight = 1);
 
     int id;
-    QString hash;
-    QList<short> tileIDs; //pattern is a square, starting from the top left corner
+    //QString hash; //might implement for speedup purposes
     int size;
     qreal weight;
-    void setWeight(qreal);
-    void incrementWeight();
+    QList<short> tileIDs; //pattern is a square, starting from the top left corner
+    CompatibilityList compatibilityList;
+
+    void setWeight(qreal newWeight);
+    void incrementWeight(int incVal = 1);
+    QPoint indexToPos(const int &index);
+    short getIdFromPos(const QPoint &pos);
+    static void displayPatterns(QList<Pattern> patterns, int x, int y);
+
     bool operator== (const Pattern &pattern) const;
     bool operator== (Pattern &pattern);
     bool operator== (QList<short> &list);
     bool operator== (const QList<short> &list) const;
-
-    QVector2D indexToVector(int index);
-    static void displayPatterns(QList<Pattern> patterns, int x, int y);
 };
 
 class PatternGraphicsItem : public QGraphicsItem

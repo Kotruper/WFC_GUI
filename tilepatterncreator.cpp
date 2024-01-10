@@ -7,9 +7,14 @@ TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     patternSize = 2; //TODO: connect to a selector
 }
 
-void TilePatternCreator::createTiles(){
+TilePatternThread::TilePatternThread(QImage baseImage, int tilePixelSize, int patternSize, QObject *parent)
+    : QThread{parent}, baseImage(baseImage), tileSize(tilePixelSize), patternSize(patternSize){
+
+}
+
+void TilePatternCreator::updateTiles(QList<Tile> newTiles){
     //qDebug("got into creating");
-    this->tiles = generateTiles(baseImage, tileSize);
+    this->tiles = newTiles;
 
     auto displayTiles = [&](QList<Tile> tiles, int yOffset){
         for (int i = 0; i < tiles.size(); ++i) { //Display the tiles
@@ -22,36 +27,9 @@ void TilePatternCreator::createTiles(){
     displayTiles(this->tiles, -10);
 }
 
-QList<Tile> TilePatternCreator::generateTiles(QImage baseImage, int tileSize){ //sideEfect: fills the idMap
-    QList<Tile> newTiles{};
-
-    int mapHeight = baseImage.height() / tileSize;
-    int mapWidth = baseImage.width() / tileSize;
-
-    idMap.clear();
-
-    for(int iY = 0; iY < mapHeight; iY++){
-        for(int iX = 0; iX < mapWidth; iX++){
-            const QImage potentialTile = baseImage.copy(iX*tileSize, iY*tileSize, tileSize, tileSize);
-            int findIndex = newTiles.indexOf(potentialTile);
-            if(findIndex == -1){
-                Tile newTile = Tile(potentialTile, tileSize, newTiles.size()); //maybe rethink id
-                newTiles.append(newTile);
-                idMap.append(newTile.id);
-            }
-            else{
-                newTiles[findIndex].incrementWeight();
-                idMap.append(newTiles.at(findIndex).id);
-            }
-        }
-    }
-    qDebug()<<"IdMap: "<<idMap;
-    return newTiles;
-}
-
-void TilePatternCreator::createPatterns(){
-    this->patterns = generatePatterns(idMap, patternSize);
-    qDebug("got to patterns");
+void TilePatternCreator::updatePatterns(QList<Pattern> newPatterns){
+    this->patterns = newPatterns;
+    //qDebug("got to patterns");
 
     auto displayPatterns = [&](QList<Pattern> patterns, int yOffset){
         for (int i = 0; i < patterns.size(); ++i) { //Display the tiles
@@ -64,51 +42,29 @@ void TilePatternCreator::createPatterns(){
     displayPatterns(this->patterns, baseImage.height() + 10);
 }
 
-QList<Pattern> TilePatternCreator::generatePatterns(QList<short> IDmap, int patternSize){
-
-
-    QList<Pattern> newPatterns{};
-    int mapHeight = baseImage.height() / tileSize;
-    int mapWidth = baseImage.width() / tileSize;
-
-    auto getAdjacent = [&](int x, int y){
-        QList<short> adjacent{};
-        for(int iY = 0; iY < patternSize; iY++){
-            for(int iX = 0; iX < patternSize; iX++){
-                adjacent.append(IDmap.at(x + iX + (y + iY) * (mapWidth - 0)));
-            }
-        }
-        return adjacent;
-    };
-
-    for(int iY = 0; iY < mapHeight - (patternSize - 1); iY++){ //pattern y limit
-        for(int iX = 0; iX < mapWidth - (patternSize - 1); iX++){ //pattern x limit
-            QList<short> potentialPattern = getAdjacent(iX, iY);
-            int findIndex = newPatterns.indexOf(potentialPattern);
-            if(findIndex == -1){
-                Pattern newPattern = Pattern(potentialPattern, patternSize, 1, newPatterns.size());
-                newPatterns.append(newPattern);
-            }
-            else{
-                newPatterns[findIndex].incrementWeight();
-            }
-        }
-    }
-    return newPatterns;
-}
-
-void TilePatternCreator::setImage(QString filename){
+void TilePatternCreator::setImage(QString filename){ //will need some changes for the wall, maybe here or in tiledRead?
     creatorView->view()->scene()->clear();
     this->baseImage.load(filename);
     creatorView->view()->scene()->addPixmap(QPixmap::fromImage(baseImage));
 }
 
-void TilePatternCreator::exportPatterns(){
+void TilePatternCreator::extractPatterns(){
     creatorView->view()->scene()->clear();
     creatorView->view()->scene()->addPixmap(QPixmap::fromImage(baseImage));
-    createTiles();
-    createPatterns();
+    //lock ui except for cancel or smth
+
+    auto activeTilePatternThread = new TilePatternThread(this->baseImage,this->tileSize,this->patternSize,this); //currently not deleted?
+
+    connect(activeTilePatternThread, &TilePatternThread::sendTiles, this, &TilePatternCreator::updateTiles);
+    connect(activeTilePatternThread, &TilePatternThread::sendPatterns, this, &TilePatternCreator::updatePatterns);
+    connect(activeTilePatternThread, &TilePatternThread::finished, this, &TilePatternCreator::exportPatterns);
+    connect(activeTilePatternThread, &TilePatternThread::finished, activeTilePatternThread, &TilePatternThread::deleteLater);
+    activeTilePatternThread->start();
+}
+
+void TilePatternCreator::exportPatterns(){
     emit patternsSignal(this->tiles, this->patterns);
+    //unlock ui
 }
 
 void TilePatternCreator::setPatternSize(int size){
@@ -117,4 +73,89 @@ void TilePatternCreator::setPatternSize(int size){
 
 void TilePatternCreator::setTileSize(int size){
     this->tileSize = size;
+}
+
+//////////////////////////////////////////////////////////////////
+
+QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //sideEfect: fills the idMap
+    QList<Tile> newTiles{};
+
+    int mapHeight = baseImage.height() / tileSize;
+    int mapWidth = baseImage.width() / tileSize;
+
+    idMap.clear();
+
+    for(int iY = 0; iY < mapHeight; iY++){
+        for(int iX = 0; iX < mapWidth; iX++){
+            const QImage potentialTile = baseImage.copy(iX*tileSize, iY*tileSize, tileSize, tileSize);
+            int findIndex = newTiles.indexOf(potentialTile);
+            if(findIndex == -1){
+                Tile newTile = Tile(newTiles.size(), potentialTile, tileSize); //maybe rethink id
+                newTiles.append(newTile);
+                idMap.append(newTile.id);
+            }
+            else{
+                newTiles[findIndex].incrementWeight();
+                idMap.append(newTiles.at(findIndex).id);
+            }
+
+            emit sendTiles(newTiles);
+            if(this->isInterruptionRequested())
+                return newTiles;
+        }
+    }
+    qDebug()<<"IdMap: "<<idMap;
+    return newTiles;
+}
+
+void updatePatternCompability(QList<Pattern> &patterns){
+
+}
+
+QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patternSize){
+
+    QList<Pattern> newPatterns{};
+    int mapHeight = baseImage.height() / tileSize;
+    int mapWidth = baseImage.width() / tileSize;
+
+    auto getAdjacent = [&](int x, int y){ //wrapping implemented
+        QList<short> adjacent{};
+        for(int dy = 0; dy < patternSize; dy++){
+            for(int dx = 0; dx < patternSize; dx++){
+                int wrappedX = (x + dx) % mapWidth;
+                int wrappedY = (y + dy) % mapHeight;
+                adjacent.append(IDmap.at(wrappedX + wrappedY * mapWidth));
+            }
+        }
+        return adjacent;
+    };
+
+    int patternYlimit = mapHeight - (patternSize - 1); //will need to change with wrapping
+    int patternXlimit = mapWidth - (patternSize - 1); //will need to change with wrapping
+
+    for(int iY = 0; iY < patternYlimit; iY++){ //pattern y limit
+        for(int iX = 0; iX < patternXlimit; iX++){ //pattern x limit
+            QList<short> potentialPattern = getAdjacent(iX, iY);
+            int findIndex = newPatterns.indexOf(potentialPattern);
+            if(findIndex == -1){
+                Pattern newPattern = Pattern(newPatterns.size(), potentialPattern, patternSize);
+                newPatterns.append(newPattern);
+            }
+            else{
+                newPatterns[findIndex].incrementWeight();
+            }
+
+            emit sendPatterns(newPatterns);
+            if(this->isInterruptionRequested())
+                return newPatterns;
+            //this->msleep(500); //holy shit this works
+        }
+    }
+    updatePatternCompability(newPatterns);
+    return newPatterns;
+}
+
+void TilePatternThread::run(){
+    generateTiles(this->baseImage,this->tileSize);
+    generatePatterns(this->idMap, this->patternSize);
 }

@@ -865,9 +865,9 @@
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="exportPatternsButton">
+            <widget class="QPushButton" name="extractPatternsButton">
              <property name="text">
-              <string>Export</string>
+              <string>Extract</string>
              </property>
             </widget>
            </item>

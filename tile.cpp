@@ -8,9 +8,6 @@
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 
-int Tile::commonID = 0;
-int Pattern::commonID = 0;
-
 TileGraphicsItem::TileGraphicsItem(const Tile& tile): refTile(tile)
 {
 }
@@ -34,18 +31,17 @@ void TileGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
 
 }
 
-Tile::Tile(QImage image, int size, int id){
-    this->image = image;
-    this->size = size;
-    this->id = id;
+Tile::Tile(int id, QImage image, int size)
+    :id(id), image(image), size(size)
+{
 }
 
 void Tile::setWeight(qreal newWeight){
     this->weight = newWeight;
 }
 
-void Tile::incrementWeight(){
-    this->weight++;
+void Tile::incrementWeight(int n){
+    this->weight+=n;
 }
 
 bool Tile::operator==(QImage &other){
@@ -64,19 +60,21 @@ bool Tile::operator==(Tile &other){
     return this->image == other.image;
 }
 
-Pattern::Pattern(const QList<short> tileIDs, int size, int weight, int id){
-    this->tileIDs = tileIDs;
-    this->weight = weight;
-    this->size = size;
-    this->id = id;
+Pattern::Pattern(int id, QList<short> tileIDs, int size, int weight)
+    :id(id), tileIDs(tileIDs), size(size), weight(weight)
+{
 }
 
-void Pattern::incrementWeight(){
-    this->weight++;
+void Pattern::incrementWeight(int n){
+    this->weight+=n;
 }
 
-QVector2D Pattern::indexToVector(int index){
-    return QVector2D(index % size, index / size);
+QPoint Pattern::indexToPos(const int &index){
+    return QPoint(index % size, index / size);
+}
+
+short Pattern::getIdFromPos(const QPoint &pos){
+    return this->tileIDs.at(pos.x() + pos.y()*this->size);
 }
 
 bool Pattern::operator==(QList<short> &other){
@@ -116,11 +114,10 @@ void PatternGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsIte
 {
     Q_UNUSED(widget);
     for(int i = 0;i<refPattern.tileIDs.size();i++){
-
         Tile tileToDraw = tileset.at(refPattern.tileIDs.at(i));
-        QVector2D offset = refPattern.indexToVector(i) * tileToDraw.size;
-        painter->setOpacity(1);
-        painter->drawImage(offset.toPointF(), tileToDraw.image);
+        QPoint offset = refPattern.indexToPos(i) * tileToDraw.size;
+        painter->setOpacity(1); //thingy
+        painter->drawImage(offset, tileToDraw.image);
     }
 }
 /*

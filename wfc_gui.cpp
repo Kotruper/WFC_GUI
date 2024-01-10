@@ -33,7 +33,7 @@ WFC_GUI::WFC_GUI(QWidget *parent)
 
     //connect(ui->generateTilesButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createTiles);
     //connect(ui->generatePatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createPatterns);
-    connect(ui->exportPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::exportPatterns);
+    connect(ui->extractPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::extractPatterns);
     connect(ui->tilePixelSizeInput, &QSpinBox::valueChanged, tpCreator, &TilePatternCreator::setTileSize);
     connect(ui->patternSizeInput, &QSpinBox::valueChanged, tpCreator, &TilePatternCreator::setPatternSize);
     connect(tpCreator, &TilePatternCreator::patternsSignal, wfc_generator, &wfc::setPatterns);
@@ -55,7 +55,7 @@ void WFC_GUI::on_selectFileButton_clicked()
     QString filename = QFileDialog::getOpenFileName(this,tr("Open Image"), "C:\\Users\\kotru\\Documents\\Studia_7\\Inzynierka", tr("Image files (*.png *.jpg *.bmp)"));
     tpCreator->setImage(filename);
 }
-
+/*
 void WFC_GUI::populateScene() //test function
 {
     auto imageset = new QList<Tile>();
@@ -81,3 +81,4 @@ void WFC_GUI::populateScene() //test function
         }
     }
 }
+*/
