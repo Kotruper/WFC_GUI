@@ -57,14 +57,14 @@ void TilePatternCreator::extractPatterns(){
 
     connect(activeTilePatternThread, &TilePatternThread::sendTiles, this, &TilePatternCreator::updateTiles);
     connect(activeTilePatternThread, &TilePatternThread::sendPatterns, this, &TilePatternCreator::updatePatterns);
-    connect(activeTilePatternThread, &TilePatternThread::finished, this, &TilePatternCreator::exportPatterns);
+    connect(activeTilePatternThread, &TilePatternThread::finishedSuccessfully, this, &TilePatternCreator::exportPatterns);
     connect(activeTilePatternThread, &TilePatternThread::finished, activeTilePatternThread, &TilePatternThread::deleteLater);
     activeTilePatternThread->start();
 }
 
 void TilePatternCreator::exportPatterns(){
     emit patternsSignal(this->tiles, this->patterns);
-    //unlock ui
+    //unlock ui. will also need to do if interrupted
 }
 
 void TilePatternCreator::setPatternSize(int size){
@@ -108,8 +108,22 @@ QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //
     return newTiles;
 }
 
-void updatePatternCompability(QList<Pattern> &patterns){
+void TilePatternThread::updatePatternCompability(QList<Pattern> &patterns, int patternSize){
+    for(Pattern &pRef: patterns){
+        for(int dy = -patternSize + 1; dy < patternSize; dy++){
+            for(int dx = -patternSize + 1; dx < patternSize; dx++){
+                if((dx * dy) == 0) continue; //skip self. remember to skip in wfc as well
+                for(const Pattern &otherP: patterns){
+                    auto &compListRef = pRef.getCompabilityListRefAt({dx, dy});
+                    if(pRef.isCompatibleAt(otherP, {dx, dy}))
+                        compListRef.append(otherP.id);
 
+                    if(this->isInterruptionRequested())
+                        return;
+                }
+            }
+        }
+    }
 }
 
 QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patternSize){
@@ -151,11 +165,13 @@ QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patte
             //this->msleep(500); //holy shit this works
         }
     }
-    updatePatternCompability(newPatterns);
+    updatePatternCompability(newPatterns, patternSize);
     return newPatterns;
 }
 
 void TilePatternThread::run(){
     generateTiles(this->baseImage,this->tileSize);
     generatePatterns(this->idMap, this->patternSize);
+    if(!this->isInterruptionRequested())
+        emit finishedSuccessfully();
 }

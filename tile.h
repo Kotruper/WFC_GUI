@@ -51,9 +51,10 @@ private:
     QList<QPointF> stuff; //what
 };
 
+using CompatibilityList = QList<QList<QList<short>>>; //dy, dx, patternIDs?
+
 class Pattern
 {
-    using CompatibilityList = QList<QList<QList<short>>>; //dy, dx, patternIDs?
 
 public:
     Pattern(int id, QList<short> tileIDs, int size, int weight = 1);
@@ -68,7 +69,9 @@ public:
     void setWeight(qreal newWeight);
     void incrementWeight(int incVal = 1);
     QPoint indexToPos(const int &index);
-    short getIdFromPos(const QPoint &pos);
+    const short getTileIdAtPos(const QPoint &pos) const;
+    QList<short>& getCompabilityListRefAt(const QPoint &pos);
+    bool isCompatibleAt(const Pattern &otherP, const QPoint &pos);
     static void displayPatterns(QList<Pattern> patterns, int x, int y);
 
     bool operator== (const Pattern &pattern) const;

@@ -59,10 +59,13 @@ bool Tile::operator==(const Tile &other) const{
 bool Tile::operator==(Tile &other){
     return this->image == other.image;
 }
+////////////////////////////////////////////////////////////
 
 Pattern::Pattern(int id, QList<short> tileIDs, int size, int weight)
     :id(id), tileIDs(tileIDs), size(size), weight(weight)
 {
+    int patternCheckSize = size * 2 - 1;
+    this->compatibilityList = CompatibilityList{patternCheckSize,{patternCheckSize,{}}};
 }
 
 void Pattern::incrementWeight(int n){
@@ -73,8 +76,27 @@ QPoint Pattern::indexToPos(const int &index){
     return QPoint(index % size, index / size);
 }
 
-short Pattern::getIdFromPos(const QPoint &pos){
+const short Pattern::getTileIdAtPos(const QPoint &pos) const{
     return this->tileIDs.at(pos.x() + pos.y()*this->size);
+}
+
+QList<short>& Pattern::getCompabilityListRefAt(const QPoint &pos){//accepts -size to +size
+    return this->compatibilityList[pos.y() + size - 1][pos.x() + size - 1];
+}
+
+bool Pattern::isCompatibleAt(const Pattern &otherPattern, const QPoint &pos){// how the fuck do you compose??? two patterns. also, is pos just a vector?
+    int minX = (pos.x() < 0) ? 0 : pos.x(); //good
+    int maxX = (pos.x() >= 0) ? this->size : pos.x() + size; //good. technically gives +1, but should cancel out in the loops below
+    int minY = (pos.y() < 0) ? 0 : pos.y(); //good
+    int maxY = (pos.y() >= 0) ? this->size : pos.y() + size; //good
+    for(int dy = minY; dy < maxY; dy++){ //less than is important
+        for(int dx = minX; dx < maxX; dx++){
+            if(this->getTileIdAtPos({dx,dy}) != otherPattern.getTileIdAtPos(QPoint{dx,dy} - pos)){
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool Pattern::operator==(QList<short> &other){

@@ -53,12 +53,14 @@ private:
 
     QList<Pattern> generatePatterns(QList<short> idMap, int patternSize);
     QList<Tile> generateTiles(QImage baseImage, int tileSize);
+    void updatePatternCompability(QList<Pattern> &patterns, int patternSize);
 
     void run() override;
 
 signals:
     void sendTiles(QList<Tile>);
     void sendPatterns(QList<Pattern>);
+    void finishedSuccessfully(); //add finished status?
 };
 
 #endif // TILEPATTERNCREATOR_H
