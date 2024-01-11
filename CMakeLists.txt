@@ -25,7 +25,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         tile.cpp tile.h main.cpp view.cpp view.h wfc_gui.cpp wfc_gui.h wfc_gui.ui
         tilepatterncreator.h tilepatterncreator.cpp
-        wfc.h wfc.cpp )
+        wavefunctioncollapser.h wavefunctioncollapser.cpp )
 
 #    if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 #        qt_add_executable(WFC_GUI

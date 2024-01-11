@@ -1,5 +1,3 @@
-#include "qrandom.h"
-#include "tile.h"
 #include "view.h"
 
 #include <QHBoxLayout>
@@ -17,7 +15,7 @@ WFC_GUI::WFC_GUI(QWidget *parent)
 
     View *wfcView = new View("Tiles view");
     wfcView->view()->setScene(scene);
-    wfc_generator = new wfc(wfcView,this);
+    wfc_generator = new WaveFunctionCollapser(wfcView,this);
 
     QHBoxLayout *wfc_layout = new QHBoxLayout;
     wfc_layout->addWidget(wfcView);
@@ -36,13 +34,13 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(ui->extractPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::extractPatterns);
     connect(ui->tilePixelSizeInput, &QSpinBox::valueChanged, tpCreator, &TilePatternCreator::setTileSize);
     connect(ui->patternSizeInput, &QSpinBox::valueChanged, tpCreator, &TilePatternCreator::setPatternSize);
-    connect(tpCreator, &TilePatternCreator::patternsSignal, wfc_generator, &wfc::setPatterns);
+    connect(tpCreator, &TilePatternCreator::patternsSignal, wfc_generator, &WaveFunctionCollapser::setPatterns);
 
-    connect(ui->generateGridButton, &QPushButton::clicked, wfc_generator, &wfc::generate);
-    connect(ui->generateStepButton, &QPushButton::clicked, wfc_generator, &wfc::generateOneStep);
-    connect(ui->gridWidthSelector, &QSpinBox::valueChanged, wfc_generator, &wfc::changeGridWidth);
-    connect(ui->gridHeightSelector, &QSpinBox::valueChanged, wfc_generator, &wfc::changeGridHeight);
-    connect(ui->clearGridButton, &QPushButton::clicked, wfc_generator, &wfc::clearGrid);
+    connect(ui->generateGridButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::generate);
+    connect(ui->generateStepButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::generateOneStep);
+    connect(ui->gridWidthSelector, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::changeGridWidth);
+    connect(ui->gridHeightSelector, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::changeGridHeight);
+    connect(ui->clearGridButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::clearGrid);
 }
 
 WFC_GUI::~WFC_GUI()
