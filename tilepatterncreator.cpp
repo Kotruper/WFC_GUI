@@ -1,5 +1,6 @@
 #include "tilepatterncreator.h"
 #include "QFileDialog"
+#include "qbitarray.h"
 
 TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     : QObject{parent}, creatorView(view){
@@ -112,11 +113,12 @@ void TilePatternThread::updatePatternCompability(QList<Pattern> &patterns, int p
     for(Pattern &pRef: patterns){
         for(int dy = -patternSize + 1; dy < patternSize; dy++){
             for(int dx = -patternSize + 1; dx < patternSize; dx++){
-                if((dx * dy) == 0) continue; //skip self. remember to skip in wfc as well
+                auto &compListRef = pRef.getCompabilityListRefAt({dx, dy});
+                compListRef = QBitArray(patterns.size());
+                if((dx==0) && (dy==0)) continue; //skip self. remember to skip in wfc as well
                 for(const Pattern &otherP: patterns){
-                    auto &compListRef = pRef.getCompabilityListRefAt({dx, dy});
                     if(pRef.isCompatibleAt(otherP, {dx, dy}))
-                        compListRef.append(otherP.id);
+                        compListRef.setBit(otherP.id); //bitset
 
                     if(this->isInterruptionRequested())
                         return;
@@ -144,8 +146,8 @@ QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patte
         return adjacent;
     };
 
-    int patternYlimit = mapHeight - (patternSize - 1); //will need to change with wrapping
-    int patternXlimit = mapWidth - (patternSize - 1); //will need to change with wrapping
+    int patternYlimit = mapHeight;// - (patternSize - 1); //will need to change with wrapping to just mapHeight
+    int patternXlimit = mapWidth;// - (patternSize - 1); //will need to change with wrapping
 
     for(int iY = 0; iY < patternYlimit; iY++){ //pattern y limit
         for(int iX = 0; iX < patternXlimit; iX++){ //pattern x limit
@@ -166,6 +168,7 @@ QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patte
         }
     }
     updatePatternCompability(newPatterns, patternSize);
+    emit sendPatterns(newPatterns);
     return newPatterns;
 }
 

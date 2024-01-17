@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 #include "tile.h"
-#include "qvectornd.h"
+#include "qbitarray.h"
 
 #include <QGraphicsSceneMouseEvent>
 #include <QPainter>
@@ -65,7 +65,7 @@ Pattern::Pattern(int id, QList<short> tileIDs, int size, int weight)
     :id(id), tileIDs(tileIDs), size(size), weight(weight)
 {
     int patternCheckSize = size * 2 - 1;
-    this->compatibilityList = CompatibilityList{patternCheckSize,{patternCheckSize,{}}};
+    this->compatibilityList = CompatibilityList{patternCheckSize,QList<QBitArray>{patternCheckSize, QBitArray()}};
 }
 
 void Pattern::incrementWeight(int n){
@@ -80,7 +80,7 @@ const short Pattern::getTileIdAtPos(const QPoint &pos) const{
     return this->tileIDs.at(pos.x() + pos.y()*this->size);
 }
 
-QList<short>& Pattern::getCompabilityListRefAt(const QPoint &pos){//accepts -size to +size
+QBitArray& Pattern::getCompabilityListRefAt(const QPoint &pos){//accepts -size to +size
     return this->compatibilityList[pos.y() + size - 1][pos.x() + size - 1];
 }
 

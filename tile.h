@@ -51,7 +51,7 @@ private:
     QList<QPointF> stuff; //what
 };
 
-using CompatibilityList = QList<QList<QList<short>>>; //dy, dx, patternIDs?
+using CompatibilityList = QList<QList<QBitArray>>; //dy, dx, patternIDs?, can store 128 * 128 patterns
 
 class Pattern
 {
@@ -70,7 +70,7 @@ public:
     void incrementWeight(int incVal = 1);
     QPoint indexToPos(const int &index);
     const short getTileIdAtPos(const QPoint &pos) const;
-    QList<short>& getCompabilityListRefAt(const QPoint &pos);
+    QBitArray& getCompabilityListRefAt(const QPoint &pos);
     bool isCompatibleAt(const Pattern &otherP, const QPoint &pos);
     static void displayPatterns(QList<Pattern> patterns, int x, int y);
 

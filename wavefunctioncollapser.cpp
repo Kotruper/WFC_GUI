@@ -4,20 +4,115 @@
 WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *parent)
     : QObject{parent}, generatorView(generatorView)
 {
-    gridHeight = 5; //connect these later
+    gridHeight = 5;
     gridWidth = 5;
 }
 
-QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(const QList<Tile> &tiles, int width, int height){
+QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){
     auto newGrid = QList<TileSlot>{};
 
-    int tileAmount = tiles.size(); //if any tiles are disabled, make sure to 0 out those ones
+    int patternCount = patterns.size(); //if any tiles are disabled, make sure to 0 out those ones
     for(int y=0; y < height; y++){
         for(int x=0; x < width; x++){
-            newGrid.append(TileSlot{QBitArray(tileAmount, true), QPoint{x,y}});
+            newGrid.append(TileSlot{QBitArray(patternCount, true), QPoint{x,y}});
         }
     }
     return newGrid;
+}
+
+bool WaveFunctionCollapser::isInBounds(const QPoint &pos){ //is this being used?
+    return (pos.x()>=0) && (pos.x()<gridWidth) && (pos.y()>=0) && (pos.y()<gridHeight);
+}
+
+void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height){
+    this->generatorView->view()->scene()->clear(); //Needed?
+    int tileSize = tiles.first().size;
+
+    for (const auto &ts: grid) { //Display the tiles
+        QGraphicsItem *item;
+        if(ts.collapsedId >= 0){
+            short tileId = patterns.at(ts.collapsedId).tileIDs.first();
+            item = new TileGraphicsItem(tiles.at(tileId));
+        }
+        else if(ts.collapsedId == -1){ //Display uncollapsed tile
+            QString text;
+            for(int i = 0; i < ts.patternIdBitset.size(); i++){
+                text.append((ts.patternIdBitset.testBit(i)) ? '1' : '0');
+                if((i%16) == 15) text.append('\n');
+            }
+            auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
+            rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
+            auto innerText = new QGraphicsSimpleTextItem(text, rectItem);
+            innerText->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
+            innerText->setScale(0.01);
+            item = rectItem;
+        }
+        else if(ts.collapsedId == -2){ //Display uncollapsible tile
+            auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
+            rectItem->setBrush(QBrush(QColor(255,0,200),Qt::BrushStyle::Dense4Pattern));
+            rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
+            item = rectItem;
+        }
+        item->setPos(ts.pos * tileSize);
+        generatorView->view()->scene()->addItem(item);
+        //qDebug()<<tiles[ts.collapsedId].id;
+    }
+}
+
+void WaveFunctionCollapser::setPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns){
+    this->tiles = newTiles;
+    this->patterns = newPatterns;
+    this->grid = createEmptyGrid(gridWidth, gridHeight);
+    qDebug()<<"Received tiles ("<<newTiles.size()<<") and patterns("<<newPatterns.size()<<")";
+}
+
+void WaveFunctionCollapser::changeGridHeight(int val){
+    if(val > 0)
+        this->gridHeight = val;
+}
+
+void WaveFunctionCollapser::changeGridWidth(int val){
+    if(val > 0)
+        this->gridWidth = val;
+}
+
+void WaveFunctionCollapser::clearGrid(){
+    this->grid = createEmptyGrid(gridWidth, gridHeight);
+    this->generatorView->view()->scene()->clear();
+}
+
+void WaveFunctionCollapser::generate(int iters){
+    if(iters == 0){ //for 0 generate full grid
+        iters = gridHeight * gridWidth;
+        clearGrid();
+    }
+    //lock ui except for cancel or smth
+
+    auto activeCollapserThread = new WaveFunctionThread(grid, patterns, gridWidth, gridHeight, iters, this); //currently not deleted?
+
+    connect(activeCollapserThread, &WaveFunctionThread::sendGrid, this, &WaveFunctionCollapser::updateGrid);
+    //connect(activeCollapserThread, &WaveFunctionThread::sendPatterns, this, &TilePatternCreator::updatePatterns);
+    //connect(activeCollapserThread, &WaveFunctionThread::finishedSuccessfully, this, &WaveFunctionCollapser::smth);
+    connect(activeCollapserThread, &WaveFunctionThread::finished, activeCollapserThread, &WaveFunctionThread::deleteLater);
+    activeCollapserThread->start();
+}
+
+void WaveFunctionCollapser::generateOneStep(){
+    generate(1);
+}
+
+void WaveFunctionCollapser::updateGrid(QList<TileSlot> newGrid){
+    this->grid = newGrid;
+    displayGrid(grid,tiles,gridWidth, gridHeight);
+}
+
+///////////////////////////////////////////////////////
+
+WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QObject *parent)
+    : QThread{parent}, starterGrid(starterGrid), patterns(patterns), gridHeight(gridHeight), gridWidth(gridWidth), iters(iters)
+{
+    this->grid = starterGrid;
+    //propagate Permanent
 }
 
 short weightedRandom(const QList<double> &weightLimits) {
@@ -27,158 +122,123 @@ short weightedRandom(const QList<double> &weightLimits) {
 }
 
 void WaveFunctionThread::collapseSlot(QPoint &toCollapse, const QList<Pattern> &patterns){ //Weighted random TODO: will need to deal with empty slots)
-    TileSlot &slot = getSlotAt(toCollapse);
-    if(slot.tileIdBitset.count(true) == 0){
+    TileSlot &slot = getSlotRefAt(toCollapse);
+    if(slot.patternIdBitset.count(true) == 0){
         slot.collapsedId = -2; //I guess -2 means unsolvable?
-        return;
+        return; //return false?
     }
     QList<short> possibleIds;
     QList<double> weightLimits = {0.0};
     for(int id = 0; id < patterns.size(); id++){
-        if(slot.tileIdBitset.testBit(id)){
+        if(slot.patternIdBitset.testBit(id)){
             possibleIds.append(id);
             weightLimits.append(patterns.at(id).weight + weightLimits.back());
         }
     }
     short patternId = possibleIds[weightedRandom(weightLimits)]; //TODO: will need to update, maybe
     slot.collapsedId = patternId;
-    slot.tileIdBitset = QBitArray(slot.tileIdBitset.size());
-    slot.tileIdBitset.setBit(patternId);
+    slot.patternIdBitset = QBitArray(slot.patternIdBitset.size());
+    slot.patternIdBitset.setBit(patternId);
 }
 
-TileSlot& WaveFunctionCollapser::getSlotAt(const QPoint &pos){
-    return grid[(pos.x() + pos.y()*this->gridWidth)];
+TileSlot& WaveFunctionThread::getSlotRefAt(const QPoint &pos){ //modulo, accepts negative.
+    int wrappedX = (pos.x() + gridWidth) % gridWidth; //adding width/height for neg modulo shenanigans
+    int wrappedY = (pos.y() + gridHeight) % gridHeight;
+    return grid[( wrappedX + wrappedY*gridWidth)];
 }
 
-bool WaveFunctionCollapser::isInBounds(const QPoint &pos){
-    return (pos.x()>=0) && (pos.x()<gridWidth) && (pos.y()>=0) && (pos.y()<gridHeight);
-}
-
-QList<QPoint> WaveFunctionThread::getAffectedPatternCoords(const QPoint &p, int patternSize){ //NxN coords, with slot at p in the bottom right
-    QList<QPoint> resultCoords;
-    for(int y = -patternSize + 1; y <= 0; y++){
-        for(int x = -patternSize + 1; x <= 0; x++){
-            resultCoords.append(QPoint{x,y} + p);
-        }
-    }
-    return resultCoords;
-}
-/*
-QList<TileSlot> WaveFunctionCollapser::getPatternTiles(const QPoint &p, int patternSize, const QList<TileSlot> &grid){ //NxN coords, with point p at the top left
-    static TileSlot dummy = {QBitArray{grid.first().tileIdBitset.size(),true}, {-1,-1}}; //Dummy Slot, for applying patterns on out of bounds tiles
-
-    auto isUnsolvable = [](const TileSlot &t){return *t.tileIdBitset.bits() == 0;}; //test
-
-    QList<TileSlot> resultSlots;
-
-    for(int y = p.y(); y < p.y() + patternSize; y++){
-        for(int x = p.x(); x < p.x() + patternSize; x++){
-            if(isInBounds({x,y}) && !isUnsolvable(getSlotAt({x,y}))) //test
-                resultSlots.append(getSlotAt({x,y})); //TODO: addDummySlots
-            else
-                resultSlots.append(dummy);
-        }
-    }
-    return resultSlots;
-}
-*/
-bool doesPatternFit(const Pattern &p, const QList<QBitArray> &bitCube){ //TODO: dont i only have to check the updated tile?
-    for(int i = 0; i < p.size*p.size; i++){
-        if(bitCube.at(i).testBit(p.tileIDs.at(i)) == false)
-            return false;
-    }
-    return true;
-}
-
-void updateCube(const Pattern &p, QList<QBitArray> &bitCube){
-    for(int i = 0; i < p.size*p.size; i++){
-        bitCube[i].setBit(p.tileIDs.at(i));
-    }
-}
-
-QList<QPoint> WaveFunctionThread::propagateUpdate(QList<TileSlot> &grid, const QPoint &collapsed, const QList<Pattern> &patterns){ //should probably disentagle this mess. unless it works, then fuck it
+QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const QList<Pattern> &patterns){ //should probably disentagle this mess. unless it works, then fuck it
     int patternSize = patterns.first().size;
     QList<QPoint> updatedSlots = {collapsed}; //maybe set?
-    //QList<QPoint> resultUpdatedSlots; test
 
-    auto isUnsolvable = [](const TileSlot &t){return *t.tileIdBitset.bits() == 0;};
+    auto isUnsolvable = [](const TileSlot &t){return *t.patternIdBitset.bits() == 0;};
 
-    auto printBitCube = [](const QList<QBitArray> &bitcube, QString name = ""){
-        qDebug()<<name<<":[";
-        for(auto b: bitcube){
-            qDebug()<<b<<" ";
-        }
-        qDebug()<<"]"<<Qt::endl;
+    auto ifNotContainedAppend = [&updatedSlots](const QPoint &updatedPos){
+        if(updatedSlots.contains(updatedPos))
+            return;
+        updatedSlots.append(updatedPos);
     };
 
     int currSlotIndex = 0;
     while(currSlotIndex < updatedSlots.size()){
+        //TODO!!! : need some propagation here. collapsed = updatedSlots.at(currSlotIndex)? also, pattern dependency isnt being updated
         qDebug()<<"propagation: updatedSlotAmount:"<<updatedSlots.size();
+        const TileSlot &updatedSlot = getSlotRefAt(updatedSlots.at(currSlotIndex));
+        QList<Pattern> possiblePatterns = {}; //possible patterns for the tileslot
 
-        QList<QPoint> testPatternCoords = getAffectedPatternCoords(updatedSlots.at(currSlotIndex), patternSize);
-        //resultUpdatedSlots.append(updatedSlots.takeFirst());
-/*
-        for(auto p: testPatternCoords){
-            QList<TileSlot> slotsInPattern = getPatternTiles(p, patternSize, grid);
-            QList<QBitArray> oldBitCube;
-            for(auto t:slotsInPattern){
-                oldBitCube.append(t.tileIdBitset); //fills the bitCube
-            }
-            QList<QBitArray> newBitCube{patternSize * patternSize, QBitArray{tiles.size(),false}}; //test this shit
-            for(auto p: patterns){
-                if(doesPatternFit(p,oldBitCube))
-                    updateCube(p, newBitCube);
-            }
-            for(int i = 0; i < patternSize * patternSize; i++){ //update slots
-                QPoint slotPos = slotsInPattern[i].pos;
-                if((oldBitCube.at(i) != newBitCube.at(i)) && isInBounds(slotPos) && (!isUnsolvable(slotsInPattern[i]))){
-                    getSlotAt(slotPos).tileIdBitset = newBitCube.at(i);
+        for(int i=0;i<updatedSlot.patternIdBitset.size();i++){
+            if(updatedSlot.patternIdBitset.testBit(i))
+                possiblePatterns.append(patterns.at(i));
+        }
 
-                    if(*newBitCube.at(i).bits() <= 1) //test
-                        collapseSlot(slotPos, tiles);
-                    else if(!updatedSlots.contains(slotPos))
-                        updatedSlots.append(slotPos);
+        for(int dy = -patternSize + 1; dy < patternSize; dy++){
+            for(int dx = -patternSize + 1; dx < patternSize; dx++){
+                if((dx == 0) && (dy == 0)) continue; //skip self
 
-                    //printBitCube(oldBitCube,"oldCube");
-                    //printBitCube(newBitCube,"newCube");
+                TileSlot &currentSlot = getSlotRefAt(updatedSlot.pos + QPoint{dx, dy});
+                if(currentSlot.collapsedId > -1) continue; //skip collapsed
+
+                QBitArray possiblePatternsSet = QBitArray();//collapsedPattern.getCompabilityListRefAt({dx, dy}); //slightly spaghetti, might need to go over multiple patterns (for(auto p:compListRef))
+                for(auto pat: possiblePatterns){
+                    possiblePatternsSet |= pat.getCompabilityListRefAt({dx,dy});
+                }
+
+                QBitArray newBitset = currentSlot.patternIdBitset & possiblePatternsSet;
+
+                if(newBitset.count(false) == 0){
+                    //do something, return false, i dunno, handle uncollapsable
+                }
+
+                if(currentSlot.patternIdBitset != newBitset){
+                    currentSlot.patternIdBitset = newBitset;
+                    ifNotContainedAppend(currentSlot.pos);
+                }
+
+                if(this->isInterruptionRequested())
+                    return {}; //TODO
                 }
             }
-        }
         currSlotIndex++;
-*/
-    }
-
+        }
     updatedSlots.pop_front(); //remove the collapsed TileSlot. Necessary. May need to keep track of updated slots somehow
+
     return updatedSlots; //test this whole thing
 }
 
-QList<TileSlot> WaveFunctionThread::generateGridStep(QList<TileSlot> &grid, const QList<Pattern> &patterns, int width, int height){
-    qDebug()<<"Began generating grid step";
-
-    QPoint toCollapse = collapseCandidatePos.takeFirst();
-
-    collapseSlot(toCollapse, patterns);
-    auto updatedSlots = propagateUpdate(grid, toCollapse, patterns);
-    for(QPoint sid:updatedSlots){
-        if(!collapseCandidatePos.contains(sid)) //still doesnt work properly apparently
-            collapseCandidatePos.append(updatedSlots);
-    }
-
-
-    //displayGrid(grid, tiles, width, height); //TEST
-
-    if(collapseCandidatePos.empty()){ //if no slots were updated, take the first avalible slot, if possible
-        for(auto ts:grid)
-            if(ts.collapsedId == -1){
-                collapseCandidatePos.append(ts.pos);
-                break;
-            }
+QPoint WaveFunctionThread::getSlotToCollapse(){
+    if(collapseCandidatePos.size() > 0){
+        std::sort(collapseCandidatePos.begin(), collapseCandidatePos.end(),
+                  [&](const QPoint &a, const QPoint &b){
+            return getSlotRefAt(a).patternIdBitset.count(true) < getSlotRefAt(b).patternIdBitset.count(true);
+        });
+        return collapseCandidatePos.first(); //assumes sorted
     }
     else{
-        std::sort(collapseCandidatePos.begin(), collapseCandidatePos.end(),
-                  [&](const QPoint &a, const QPoint &b){return getSlotAt(a).tileIdBitset.count(true) < getSlotAt(b).tileIdBitset.count(true);}
-                  );
+        for(const auto &ts:grid){ //get the first uncollapsed slot
+            if(ts.collapsedId == -1)
+                return ts.pos;
+        }
+        return QPoint{-1,-1};
     }
+}
+
+bool WaveFunctionThread::generateGridStep(){
+    qDebug()<<"Began generating grid step";
+
+    QPoint toCollapse = getSlotToCollapse();
+
+    if(toCollapse == QPoint{-1,-1}) //all are collapsed
+        return true;
+
+    collapseSlot(toCollapse, patterns);
+
+    const auto &updatedSlots = propagateUpdate(toCollapse, patterns); //put in candidate updating
+
+    for(const auto &pos:updatedSlots){
+        if(collapseCandidatePos.contains(pos)) continue;
+        collapseCandidatePos.append(pos);
+    }
+
     /*
         while there are uncollapsed (or empty?) slots (in the updated list), do: while(!collapseCandidatePos.empty())
             get the slot with the lowest entropy (TileSlot &currentSlot = collapseCandidatePos.first()) <- put in references!
@@ -195,77 +255,21 @@ QList<TileSlot> WaveFunctionThread::generateGridStep(QList<TileSlot> &grid, cons
 
             TODO: dummy slots for out of bounds(v), updating the view, does this shit even work?
      */
-    return grid;
+    return true;
 }
 
-void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height){
-    this->generatorView->view()->scene()->clear(); //Needed?
-    int tileSize = tiles.first().size;
-
-        for (auto ts: grid) { //Display the tiles
-            QGraphicsItem *item;
-            if(ts.collapsedId >= 0){
-                item = new TileGraphicsItem(tiles.at(ts.collapsedId));
-            }
-            else if(ts.collapsedId == -1){ //Display uncollapsed tile
-                QString text;
-                for(int i = 0; i < ts.tileIdBitset.size(); i++)
-                    text.append((ts.tileIdBitset.testBit(i)) ? '1' : '0');
-
-                auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
-                rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
-                auto innerText = new QGraphicsSimpleTextItem(text, rectItem);
-                innerText->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
-                innerText->setScale(0.01);
-                item = rectItem;
-            }
-            else if(ts.collapsedId == -2){ //Display uncollapsible tile
-                auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
-                rectItem->setBrush(QBrush(QColor(255,0,200),Qt::BrushStyle::Dense4Pattern));
-                rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
-                item = rectItem;
-            }
-            item->setPos(ts.pos * tileSize);
-            generatorView->view()->scene()->addItem(item);
-            //qDebug()<<tiles[ts.collapsedId].id;
-        }
-}
-/*
-void WaveFunctionCollapser::generate(){
-    if(tiles.empty() || patterns.empty() || (gridWidth <= 0) || (gridHeight <= 0))
-        throw("Error");
-    this->grid = createEmptyGrid(tiles, gridWidth, gridHeight);
-    while(!collapseCandidatePos.empty()){
-        qDebug()<<collapseCandidatePos.size()<<" slots left to collapse";
-        generateGridStep(this->grid,this->tiles,this->gridWidth, this->gridHeight);
+void WaveFunctionThread::run(){
+    //this->grid = this->starterGrid;
+    try{
+    for(int i = 0; i < this->iters; i++){
+        generateGridStep();
+        emit sendGrid(grid);
+        if(this->isInterruptionRequested()) break;
     }
-}
-
-void WaveFunctionCollapser::generateOneStep(){
-    if(tiles.empty() || patterns.empty() || (gridWidth <= 0) || (gridHeight <= 0))
-        throw("Error");
-    if(!collapseCandidatePos.empty())
-        generateGridStep(this->grid,this->tiles,this->gridWidth, this->gridHeight);
-}
-*/
-void WaveFunctionCollapser::setPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns){
-    this->tiles = newTiles;
-    this->patterns = newPatterns;
-    this->grid = createEmptyGrid(tiles, gridWidth, gridHeight);
-    qDebug()<<"Received tiles ("<<newTiles.size()<<") and patterns("<<newPatterns.size()<<")";
-}
-
-void WaveFunctionCollapser::changeGridHeight(int val){
-    if(val > 0)
-        this->gridHeight = val;
-}
-
-void WaveFunctionCollapser::changeGridWidth(int val){
-    if(val > 0)
-        this->gridWidth = val;
-}
-
-void WaveFunctionCollapser::clearGrid(){
-    this->grid = createEmptyGrid(tiles, gridWidth, gridHeight);
-    this->generatorView->view()->scene()->clear();
+    if(!this->isInterruptionRequested()) //or if generation failed/gave unsolvable
+        emit finishedSuccessfully();
+    }
+    catch(std::exception e){
+        qDebug()<<&e;
+    }
 }
