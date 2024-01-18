@@ -174,6 +174,7 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
         //TODO!!! : need some propagation here. collapsed = updatedSlots.at(currSlotIndex)? also, pattern dependency isnt being updated
         qDebug()<<"propagation: updatedSlotAmount:"<<updatedSlots.size();
         const TileSlot &updatedSlot = getSlotRefAt(updatedSlots.at(currSlotIndex));
+
         if(updatedSlot.collapsedId == -2) continue; //dont propagate uncollapsables, TEST
 
         QList<Pattern> possiblePatterns = {}; //possible patterns for the tileslot
@@ -203,6 +204,8 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
 
                 if(newBitset.count(true) == 0){
                     qDebug()<<"unsolvable, again";
+                    currentSlot.collapsedId = -2;
+                    continue;
                     //do something, return false, i dunno, handle uncollapsable
                 }
 
