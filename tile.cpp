@@ -135,7 +135,7 @@ QPainterPath PatternGraphicsItem::shape() const
 void PatternGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
-    for(int i = 0;i<refPattern.tileIDs.size();i++){
+    for(int i = 0; i<refPattern.tileIDs.size(); i++){
         Tile tileToDraw = tileset.at(refPattern.tileIDs.at(i));
         QPoint offset = refPattern.indexToPos(i) * tileToDraw.size;
         painter->setOpacity(1); //thingy

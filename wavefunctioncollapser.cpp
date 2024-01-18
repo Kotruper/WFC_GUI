@@ -36,9 +36,16 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
         }
         else if(ts.collapsedId == -1){ //Display uncollapsed tile
             QString text;
-            for(int i = 0; i < ts.patternIdBitset.size(); i++){
-                text.append((ts.patternIdBitset.testBit(i)) ? '1' : '0');
-                if((i%16) == 15) text.append('\n');
+            if(ts.patternIdBitset.count(false) == 0){
+                text = "Uncollapsed";
+            }
+            else{
+                for(int i = 0; i < ts.patternIdBitset.size(); i++){
+                    if(ts.patternIdBitset.testBit(i))
+                        text.append(std::to_string(i).append(","));
+                    //text.append((ts.patternIdBitset.testBit(i)) ? '1' : '0');
+                    //if((i%16) == 15) text.append('\n');
+                }
             }
             auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
             rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
@@ -116,7 +123,9 @@ WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const
 }
 
 short weightedRandom(const QList<double> &weightLimits) {
-    double randomWeight = QRandomGenerator::global()->bounded(weightLimits.last()); //TODO: add random seed
+    static auto gen = QRandomGenerator().securelySeeded();
+    //gen.seed(0); //debug, const seed
+    double randomWeight = gen.bounded(weightLimits.last()); //TODO: add random seed
     auto it = std::upper_bound(weightLimits.begin(), weightLimits.end(), randomWeight);
     return std::distance(weightLimits.begin(), it) - 1;
 }
@@ -160,10 +169,13 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
     };
 
     int currSlotIndex = 0;
-    while(currSlotIndex < updatedSlots.size()){
+//    while(currSlotIndex < updatedSlots.size()){
+    while(currSlotIndex == 0){ //temporary. does only one round of propagation
         //TODO!!! : need some propagation here. collapsed = updatedSlots.at(currSlotIndex)? also, pattern dependency isnt being updated
         qDebug()<<"propagation: updatedSlotAmount:"<<updatedSlots.size();
         const TileSlot &updatedSlot = getSlotRefAt(updatedSlots.at(currSlotIndex));
+        if(updatedSlot.collapsedId == -2) continue; //dont propagate uncollapsables, TEST
+
         QList<Pattern> possiblePatterns = {}; //possible patterns for the tileslot
 
         for(int i=0;i<updatedSlot.patternIdBitset.size();i++){
@@ -176,7 +188,11 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
                 if((dx == 0) && (dy == 0)) continue; //skip self
 
                 TileSlot &currentSlot = getSlotRefAt(updatedSlot.pos + QPoint{dx, dy});
-                if(currentSlot.collapsedId > -1) continue; //skip collapsed
+                if(currentSlot.collapsedId != -1) continue; //skip collapsed and uncollapsable
+
+                if(currentSlot.pos == QPoint{1,0}){
+                    qDebug()<<"Here's the guy";
+                }
 
                 QBitArray possiblePatternsSet = QBitArray();//collapsedPattern.getCompabilityListRefAt({dx, dy}); //slightly spaghetti, might need to go over multiple patterns (for(auto p:compListRef))
                 for(auto pat: possiblePatterns){
@@ -185,7 +201,8 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
 
                 QBitArray newBitset = currentSlot.patternIdBitset & possiblePatternsSet;
 
-                if(newBitset.count(false) == 0){
+                if(newBitset.count(true) == 0){
+                    qDebug()<<"unsolvable, again";
                     //do something, return false, i dunno, handle uncollapsable
                 }
 
@@ -197,6 +214,8 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
                 if(this->isInterruptionRequested())
                     return {}; //TODO
                 }
+            //emit sendGrid(grid);
+            //this->msleep(100);
             }
         currSlotIndex++;
         }
@@ -211,7 +230,7 @@ QPoint WaveFunctionThread::getSlotToCollapse(){
                   [&](const QPoint &a, const QPoint &b){
             return getSlotRefAt(a).patternIdBitset.count(true) < getSlotRefAt(b).patternIdBitset.count(true);
         });
-        return collapseCandidatePos.first(); //assumes sorted
+        return collapseCandidatePos.takeFirst(); //assumes sorted
     }
     else{
         for(const auto &ts:grid){ //get the first uncollapsed slot

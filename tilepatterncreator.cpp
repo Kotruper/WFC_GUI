@@ -21,6 +21,11 @@ void TilePatternCreator::updateTiles(QList<Tile> newTiles){
         for (int i = 0; i < tiles.size(); ++i) { //Display the tiles
             QGraphicsItem *item = new TileGraphicsItem(tiles.at(i));
             item->setPos(QPointF(i*(tileSize+1), yOffset));
+
+            auto id = new QGraphicsSimpleTextItem(QString::number(tiles[i].id), item);
+            //id->setPos(0,-tileSize);
+            id->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
+            id->setScale(0.1);
             creatorView->view()->scene()->addItem(item);
             //qDebug()<<tiles[i].id;
         }
@@ -36,6 +41,11 @@ void TilePatternCreator::updatePatterns(QList<Pattern> newPatterns){
         for (int i = 0; i < patterns.size(); ++i) { //Display the tiles
             QGraphicsItem *item = new PatternGraphicsItem(patterns[i],tiles);
             item->setPos(QPointF(i*(patternSize*tileSize + tileSize), yOffset));
+
+            auto id = new QGraphicsSimpleTextItem(QString::number(patterns[i].id), item);
+            //id->setPos(0,-patternSize);
+            id->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
+            id->setScale(0.1);
             creatorView->view()->scene()->addItem(item);
             //qDebug()<<tiles[i].id;
         }

@@ -28,7 +28,7 @@ View::View(const QString &name, QWidget *parent)
     graphicsView = new GraphicsView(this);
     graphicsView->setRenderHint(QPainter::Antialiasing, false);
     graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-    graphicsView->setOptimizationFlags(QGraphicsView::DontSavePainterState);
+    //graphicsView->setOptimizationFlags(QGraphicsView::DontSavePainterState);
     graphicsView->setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
     graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     graphicsView->setBackgroundBrush(QBrush(Qt::BrushStyle::Dense7Pattern));
