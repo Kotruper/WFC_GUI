@@ -12,6 +12,11 @@ struct TileSlot{
     QPoint pos;
     short collapsedId = -1;
     bool isPermament = false;
+
+    bool operator>(const TileSlot &other) const{ //a > b, when a has more options
+        return this->patternIdBitset.count(false) < other.patternIdBitset.count(false);
+    }
+    bool operator<(const TileSlot &other) const{ return !(*this > other);}
 };
 
 class WaveFunctionCollapser : public QObject

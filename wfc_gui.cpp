@@ -53,30 +53,3 @@ void WFC_GUI::on_selectFileButton_clicked()
     QString filename = QFileDialog::getOpenFileName(this,tr("Open Image"), "C:\\Users\\kotru\\Documents\\Studia_7\\Inzynierka", tr("Image files (*.png *.jpg *.bmp)"));
     tpCreator->setImage(filename);
 }
-/*
-void WFC_GUI::populateScene() //test function
-{
-    auto imageset = new QList<Tile>();
-    //imageset->append(new QImage(":/fileprint.png"));
-    //imageset->append(new QImage(":/rotateleft.png"));
-    imageset->append(Tile(QImage(":/fileprint.png"),1,0));
-    imageset->append(Tile(QImage(":/rotateleft.png"),1,1));
-    auto generator = new QRandomGenerator(2);
-    // Populate scene
-    int xx = 0;
-    for (int i = -11000; i < 11000; i += 110) {
-        ++xx;
-        int yy = 0;
-        for (int j = -7000; j < 7000; j += 70) {
-            ++yy;
-            //qreal x = (i + 11000) / 22000.0;
-            //qreal y = (j + 7000) / 14000.0;
-
-            //QColor color(image.pixel(int(image.width() * x), int(image.height() * y)));
-            QGraphicsItem *item = new TileGraphicsItem(imageset->at(qRound(generator->bounded(1.0))));
-            item->setPos(QPointF(i, j));
-            scene->addItem(item);
-        }
-    }
-}
-*/

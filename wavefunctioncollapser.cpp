@@ -4,8 +4,8 @@
 WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *parent)
     : QObject{parent}, generatorView(generatorView)
 {
-    gridHeight = 5;
-    gridWidth = 5;
+    gridHeight = 10;
+    gridWidth = 10;
 }
 
 QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){
@@ -169,24 +169,24 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
     };
 
     int currSlotIndex = 0;
-//    while(currSlotIndex < updatedSlots.size()){
-    while(currSlotIndex == 0){ //temporary. does only one round of propagation
+    while(currSlotIndex < updatedSlots.size()){
+    //while(currSlotIndex == 0){ //temporary. does only one round of propagation
         //TODO!!! : need some propagation here. collapsed = updatedSlots.at(currSlotIndex)? also, pattern dependency isnt being updated
         qDebug()<<"propagation: updatedSlotAmount:"<<updatedSlots.size();
         const TileSlot &updatedSlot = getSlotRefAt(updatedSlots.at(currSlotIndex));
 
-        if(updatedSlot.collapsedId == -2) continue; //dont propagate uncollapsables, TEST
+        if(updatedSlot.collapsedId == -2) continue; //dont propagate uncollapsables, TEST. maybe works? strange
 
         QList<Pattern> possiblePatterns = {}; //possible patterns for the tileslot
 
-        for(int i=0;i<updatedSlot.patternIdBitset.size();i++){
+        for(int i=0; i<updatedSlot.patternIdBitset.size(); i++){
             if(updatedSlot.patternIdBitset.testBit(i))
                 possiblePatterns.append(patterns.at(i));
         }
 
         for(int dy = -patternSize + 1; dy < patternSize; dy++){
             for(int dx = -patternSize + 1; dx < patternSize; dx++){
-                if((dx == 0) && (dy == 0)) continue; //skip self
+                //if((dx == 0) && (dy == 0)) continue; //dont skip self?
 
                 TileSlot &currentSlot = getSlotRefAt(updatedSlot.pos + QPoint{dx, dy});
                 if(currentSlot.collapsedId != -1) continue; //skip collapsed and uncollapsable
@@ -231,16 +231,18 @@ QPoint WaveFunctionThread::getSlotToCollapse(){
     if(collapseCandidatePos.size() > 0){
         std::sort(collapseCandidatePos.begin(), collapseCandidatePos.end(),
                   [&](const QPoint &a, const QPoint &b){
-            return getSlotRefAt(a).patternIdBitset.count(true) < getSlotRefAt(b).patternIdBitset.count(true);
+            return getSlotRefAt(a) > getSlotRefAt(b);
         });
-        return collapseCandidatePos.takeFirst(); //assumes sorted
+        return collapseCandidatePos.takeLast(); //assumes sorted and pops it out
     }
     else{
-        for(const auto &ts:grid){ //get the first uncollapsed slot
+        TileSlot minEntropySlot = {QBitArray{0},{-1,-1}}; //-1,-1 means none were found
+        for(const auto &ts:grid){ //get the first uncollapsed slot with the lowest entropy
             if(ts.collapsedId == -1)
-                return ts.pos;
+                if(ts < minEntropySlot)
+                    minEntropySlot = ts;
         }
-        return QPoint{-1,-1};
+        return minEntropySlot.pos;
     }
 }
 

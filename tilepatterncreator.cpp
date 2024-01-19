@@ -4,8 +4,8 @@
 
 TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     : QObject{parent}, creatorView(view){
-    tileSize = 5; //TODO: connect to a selector
-    patternSize = 2; //TODO: connect to a selector
+    tileSize = 1; //TODO: connect default values?
+    patternSize = 3;
 }
 
 TilePatternThread::TilePatternThread(QImage baseImage, int tilePixelSize, int patternSize, QObject *parent)
@@ -125,7 +125,7 @@ void TilePatternThread::updatePatternCompability(QList<Pattern> &patterns, int p
             for(int dx = -patternSize + 1; dx < patternSize; dx++){
                 auto &compListRef = pRef.getCompabilityListRefAt({dx, dy});
                 compListRef = QBitArray(patterns.size());
-                if((dx==0) && (dy==0)) continue; //skip self. remember to skip in wfc as well
+                //if((dx==0) && (dy==0)) continue; //skip self, actually, maybe better not
                 for(const Pattern &otherP: patterns){
                     if(pRef.isCompatibleAt(otherP, {dx, dy}))
                         compListRef.setBit(otherP.id); //bitset
