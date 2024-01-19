@@ -28,8 +28,10 @@ View::View(const QString &name, QWidget *parent)
     graphicsView = new GraphicsView(this);
     graphicsView->setRenderHint(QPainter::Antialiasing, false);
     graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-    //graphicsView->setOptimizationFlags(QGraphicsView::DontSavePainterState);
-    graphicsView->setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
+    graphicsView->setOptimizationFlags(QGraphicsView::DontSavePainterState | QGraphicsView::DontAdjustForAntialiasing);
+    //graphicsView->setCacheMode(QGraphicsView::CacheModeFlag::CacheBackground); //creates even bigger stripes
+    //graphicsView->setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
+    graphicsView->setViewportUpdateMode(QGraphicsView::FullViewportUpdate); //test. Seems pretty good for this, as there are a lot of small updates
     graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     graphicsView->setBackgroundBrush(QBrush(Qt::BrushStyle::Dense7Pattern));
 

@@ -170,9 +170,7 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
 
     int currSlotIndex = 0;
     while(currSlotIndex < updatedSlots.size()){
-    //while(currSlotIndex == 0){ //temporary. does only one round of propagation
-        //TODO!!! : need some propagation here. collapsed = updatedSlots.at(currSlotIndex)? also, pattern dependency isnt being updated
-        qDebug()<<"propagation: updatedSlotAmount:"<<updatedSlots.size();
+        //qDebug()<<"propagation: updatedSlotAmount:"<<updatedSlots.size();
         const TileSlot &updatedSlot = getSlotRefAt(updatedSlots.at(currSlotIndex));
 
         if(updatedSlot.collapsedId == -2) continue; //dont propagate uncollapsables, TEST. maybe works? strange
@@ -186,14 +184,9 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
 
         for(int dy = -patternSize + 1; dy < patternSize; dy++){
             for(int dx = -patternSize + 1; dx < patternSize; dx++){
-                //if((dx == 0) && (dy == 0)) continue; //dont skip self?
 
                 TileSlot &currentSlot = getSlotRefAt(updatedSlot.pos + QPoint{dx, dy});
                 if(currentSlot.collapsedId != -1) continue; //skip collapsed and uncollapsable
-
-                if(currentSlot.pos == QPoint{1,0}){
-                    qDebug()<<"Here's the guy";
-                }
 
                 QBitArray possiblePatternsSet = QBitArray();//collapsedPattern.getCompabilityListRefAt({dx, dy}); //slightly spaghetti, might need to go over multiple patterns (for(auto p:compListRef))
                 for(auto pat: possiblePatterns){
@@ -205,7 +198,7 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
                 if(newBitset.count(true) == 0){
                     qDebug()<<"unsolvable, again";
                     currentSlot.collapsedId = -2;
-                    continue;
+                    return {};
                     //do something, return false, i dunno, handle uncollapsable
                 }
 
@@ -222,6 +215,7 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
             }
         currSlotIndex++;
         }
+
     updatedSlots.pop_front(); //remove the collapsed TileSlot. Necessary. May need to keep track of updated slots somehow
 
     return updatedSlots; //test this whole thing
@@ -247,7 +241,7 @@ QPoint WaveFunctionThread::getSlotToCollapse(){
 }
 
 bool WaveFunctionThread::generateGridStep(){
-    qDebug()<<"Began generating grid step";
+    //qDebug()<<"Began generating grid step";
 
     QPoint toCollapse = getSlotToCollapse();
 
