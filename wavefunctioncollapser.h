@@ -30,19 +30,12 @@ public:
     QList<Tile> tiles;
     QList<Pattern> patterns;
     QList<TileSlot> grid;
-    //QList<QPoint> collapseCandidatePos;
+    QList<QPoint> collapseCandidatePos; //used between single steps
     QList<TileSlot> permamentSlots;
     int gridWidth;
     int gridHeight;
 
     QList<TileSlot> createEmptyGrid(int width, int height); //fill whole grid with uncollapsed slots, add middle to collapsable list
-    //QList<TileSlot> generateGridStep(QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height); //the big one
-
-    //void collapseSlot(QPoint slotPos, const QList<Tile> &tiles); //collapses a slot using weighted random. returns tile id (should use pattern weights too?)
-    //QList<QPoint> propagateUpdate(QList<TileSlot> &grid, const QPoint &collapsed, const QList<Pattern> &patterns, const QList<Tile> &tiles);
-    //helpers
-    //QList<QPoint> getAffectedPatternCoords(const QPoint &p, int patternSize); //return affected pattern coords (ones that contain uncollapsed slots)
-    //QList<TileSlot> getPatternTiles(const QPoint &p, int patternSize, const QList<TileSlot> &grid);
     TileSlot& getSlotRefAt(const QPoint &pos);
     bool isInBounds(const QPoint &pos);
 
@@ -56,6 +49,7 @@ public slots:
     void changeGridWidth(int val);
     void clearGrid();
     void updateGrid(QList<TileSlot>);
+    void saveCandidates(QList<QPoint> candidates);
 
 signals:
 
@@ -66,7 +60,7 @@ class WaveFunctionThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QObject *parent = nullptr);
+    explicit WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QList<QPoint> candidates, QObject *parent = nullptr);
 
 private:
     int gridWidth;
@@ -88,7 +82,7 @@ private:
 
 signals:
     void sendGrid(QList<TileSlot>); //might instead change to accessing the grid within, and send updates to read and render
-    void finishedSuccessfully(); //add finished status?
+    void finishedSuccessfully(QList<QPoint>); //add finished status? rn sends future candidates, might move to new function
 };
 
 #endif // WAVEFUNCTIONCOLLAPSER_H

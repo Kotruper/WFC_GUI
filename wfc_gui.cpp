@@ -41,6 +41,7 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(ui->gridWidthSelector, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::changeGridWidth);
     connect(ui->gridHeightSelector, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::changeGridHeight);
     connect(ui->clearGridButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::clearGrid);
+
 }
 
 WFC_GUI::~WFC_GUI()

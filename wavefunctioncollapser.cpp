@@ -6,6 +6,7 @@ WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *paren
 {
     gridHeight = 10;
     gridWidth = 10;
+    collapseCandidatePos = {};
 }
 
 QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){
@@ -28,6 +29,8 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
     this->generatorView->view()->scene()->clear(); //Needed?
     int tileSize = tiles.first().size;
 
+    QGraphicsItemGroup* gridDisplay = new QGraphicsItemGroup(); //not much effect, maybe faster
+
     for (const auto &ts: grid) { //Display the tiles
         QGraphicsItem *item;
         if(ts.collapsedId >= 0){
@@ -36,7 +39,7 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
         }
         else if(ts.collapsedId == -1){ //Display uncollapsed tile
             QString text;
-            if(ts.patternIdBitset.count(false) == 0){
+            if(ts.patternIdBitset.count(false) >= 0){ //PERF test, changed from ==
                 text = "Uncollapsed";
             }
             else{
@@ -56,14 +59,15 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
         }
         else if(ts.collapsedId == -2){ //Display uncollapsible tile
             auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
-            rectItem->setBrush(QBrush(QColor(255,0,200),Qt::BrushStyle::Dense4Pattern));
+            rectItem->setBrush(QBrush(QColor(255,0,200),Qt::BrushStyle::SolidPattern));
             rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
             item = rectItem;
         }
         item->setPos(ts.pos * tileSize);
-        generatorView->view()->scene()->addItem(item);
+        gridDisplay->addToGroup(item);
         //qDebug()<<tiles[ts.collapsedId].id;
     }
+    generatorView->view()->scene()->addItem(gridDisplay);
 }
 
 void WaveFunctionCollapser::setPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns){
@@ -95,11 +99,11 @@ void WaveFunctionCollapser::generate(int iters){
     }
     //lock ui except for cancel or smth
 
-    auto activeCollapserThread = new WaveFunctionThread(grid, patterns, gridWidth, gridHeight, iters, this); //currently not deleted?
+    auto activeCollapserThread = new WaveFunctionThread(grid, patterns, gridWidth, gridHeight, iters, collapseCandidatePos, this); //currently not deleted?
 
     connect(activeCollapserThread, &WaveFunctionThread::sendGrid, this, &WaveFunctionCollapser::updateGrid);
     //connect(activeCollapserThread, &WaveFunctionThread::sendPatterns, this, &TilePatternCreator::updatePatterns);
-    //connect(activeCollapserThread, &WaveFunctionThread::finishedSuccessfully, this, &WaveFunctionCollapser::smth);
+    connect(activeCollapserThread, &WaveFunctionThread::finishedSuccessfully, this, &WaveFunctionCollapser::saveCandidates);
     connect(activeCollapserThread, &WaveFunctionThread::finished, activeCollapserThread, &WaveFunctionThread::deleteLater);
     activeCollapserThread->start();
 }
@@ -108,15 +112,19 @@ void WaveFunctionCollapser::generateOneStep(){
     generate(1);
 }
 
-void WaveFunctionCollapser::updateGrid(QList<TileSlot> newGrid){
+void WaveFunctionCollapser::updateGrid(QList<TileSlot> newGrid){ //probably will need major optimisations
     this->grid = newGrid;
     displayGrid(grid,tiles,gridWidth, gridHeight);
 }
 
+void WaveFunctionCollapser::saveCandidates(QList<QPoint> candidates){
+    this->collapseCandidatePos = candidates;
+}
+
 ///////////////////////////////////////////////////////
 
-WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QObject *parent)
-    : QThread{parent}, starterGrid(starterGrid), patterns(patterns), gridHeight(gridHeight), gridWidth(gridWidth), iters(iters)
+WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QList<QPoint> candidates, QObject *parent)
+    : QThread{parent}, starterGrid(starterGrid), patterns(patterns), gridHeight(gridHeight), gridWidth(gridWidth), iters(iters), collapseCandidatePos(candidates)
 {
     this->grid = starterGrid;
     //propagate Permanent
@@ -256,23 +264,6 @@ bool WaveFunctionThread::generateGridStep(){
         if(collapseCandidatePos.contains(pos)) continue;
         collapseCandidatePos.append(pos);
     }
-
-    /*
-        while there are uncollapsed (or empty?) slots (in the updated list), do: while(!collapseCandidatePos.empty())
-            get the slot with the lowest entropy (TileSlot &currentSlot = collapseCandidatePos.first()) <- put in references!
-            collapse it by tile weight (TileSlot.collapse(const QList<Tile> &tiles)), maybe by pattern weight too? how?
-            propagate update: (propagateUpdate(TileSlot t)), needs x and y in tileslot
-                get a list of coordinates to check patterns at (NxN, out of bounds allowed) (return range x-n+1 - x, y-n+1 - y of coords)
-                for each coordinate, generate based on the patterns a list of possible tiles to place in the slot (maybe should be boolean/bitset?) (uhh)
-                    out of bounds count as uncollapsed (if( isOutOfBounds(coords)) behave as if its TileId list is full
-                    compare the generated list with the actual list in the tile (if TileSlot.idList ^ newLists.at(innerCords/index?) == 0)
-                    if the lists are different:
-                        update the tile and insert into the list of coordinates affected patterns (TileSlot.idList = newLists.at(innerCords/index), then same as step 2a
-                repeat, until the coordinate list is empty (done by the while loop)
-            sort collapseCandidatePos by entropy (lenght) (ez)
-
-            TODO: dummy slots for out of bounds(v), updating the view, does this shit even work?
-     */
     return true;
 }
 
@@ -285,7 +276,7 @@ void WaveFunctionThread::run(){
         if(this->isInterruptionRequested()) break;
     }
     if(!this->isInterruptionRequested()) //or if generation failed/gave unsolvable
-        emit finishedSuccessfully();
+        emit finishedSuccessfully(this->collapseCandidatePos);
     }
     catch(std::exception e){
         qDebug()<<&e;

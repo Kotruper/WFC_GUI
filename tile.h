@@ -4,7 +4,6 @@
 #ifndef TILE_H
 #define TILE_H
 
-#include <QColor>
 #include <QGraphicsItem>
 
 //Should seperate tile and pattern?
