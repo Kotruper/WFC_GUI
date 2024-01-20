@@ -4,6 +4,8 @@
 #ifndef TILE_H
 #define TILE_H
 
+#include <QBitArray>
+#include <QObject>
 #include <QGraphicsItem>
 
 //Should seperate tile and pattern?
@@ -62,6 +64,7 @@ public:
     //QString hash; //might implement for speedup purposes
     int size;
     qreal weight;
+    bool enabled = true;
     QList<short> tileIDs; //pattern is a square, starting from the top left corner
     CompatibilityList compatibilityList;
 

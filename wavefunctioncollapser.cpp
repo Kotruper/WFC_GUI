@@ -11,11 +11,15 @@ WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *paren
 
 QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){
     auto newGrid = QList<TileSlot>{};
+    int patternCount = patterns.size();
 
-    int patternCount = patterns.size(); //if any tiles are disabled, make sure to 0 out those ones
+    auto enabledPatterns = QBitArray{patternCount, true};
+    for(const auto &p:patterns)//if any tiles are disabled, make sure to 0 out those ones
+        if(!p.enabled) enabledPatterns.setBit(p.id, false);
+
     for(int y=0; y < height; y++){
         for(int x=0; x < width; x++){
-            newGrid.append(TileSlot{QBitArray(patternCount, true), QPoint{x,y}});
+            newGrid.append(TileSlot{enabledPatterns, QPoint{x,y}});
         }
     }
     return newGrid;
@@ -93,13 +97,16 @@ void WaveFunctionCollapser::clearGrid(){
 }
 
 void WaveFunctionCollapser::generate(int iters){
+    if(patterns.empty() || tiles.empty()) //maybe put out an exception? send an error signal?
+        return;
+
     if(iters == 0){ //for 0 generate full grid
         iters = gridHeight * gridWidth;
         clearGrid();
     }
     //lock ui except for cancel or smth
 
-    auto activeCollapserThread = new WaveFunctionThread(grid, patterns, gridWidth, gridHeight, iters, collapseCandidatePos, this); //currently not deleted?
+    auto activeCollapserThread = new WaveFunctionThread(grid, patterns, gridWidth, gridHeight, iters, collapseCandidatePos, seed, this); //currently not deleted?
 
     connect(activeCollapserThread, &WaveFunctionThread::sendGrid, this, &WaveFunctionCollapser::updateGrid);
     //connect(activeCollapserThread, &WaveFunctionThread::sendPatterns, this, &TilePatternCreator::updatePatterns);
@@ -121,18 +128,24 @@ void WaveFunctionCollapser::saveCandidates(QList<QPoint> candidates){
     this->collapseCandidatePos = candidates;
 }
 
+void WaveFunctionCollapser::setSeed(int newSeed){
+    this->seed = newSeed;
+}
+
 ///////////////////////////////////////////////////////
 
-WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QList<QPoint> candidates, QObject *parent)
-    : QThread{parent}, starterGrid(starterGrid), patterns(patterns), gridHeight(gridHeight), gridWidth(gridWidth), iters(iters), collapseCandidatePos(candidates)
+WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QList<QPoint> candidates, int seed, QObject *parent)
+    : QThread{parent}, starterGrid(starterGrid), patterns(patterns), gridHeight(gridHeight), gridWidth(gridWidth), iters(iters), collapseCandidatePos(candidates), seed(seed)
 {
     this->grid = starterGrid;
     //propagate Permanent
 }
 
-short weightedRandom(const QList<double> &weightLimits) {
+short weightedRandom(const QList<double> &weightLimits, int seed) {
     static auto gen = QRandomGenerator().securelySeeded();
-    //gen.seed(0); //debug, const seed
+    if(seed > -1)
+        gen.seed(seed);
+
     double randomWeight = gen.bounded(weightLimits.last()); //TODO: add random seed
     auto it = std::upper_bound(weightLimits.begin(), weightLimits.end(), randomWeight);
     return std::distance(weightLimits.begin(), it) - 1;
@@ -152,7 +165,7 @@ void WaveFunctionThread::collapseSlot(QPoint &toCollapse, const QList<Pattern> &
             weightLimits.append(patterns.at(id).weight + weightLimits.back());
         }
     }
-    short patternId = possibleIds[weightedRandom(weightLimits)]; //TODO: will need to update, maybe
+    short patternId = possibleIds[weightedRandom(weightLimits, this->seed)]; //TODO: will need to update, maybe
     slot.collapsedId = patternId;
     slot.patternIdBitset = QBitArray(slot.patternIdBitset.size());
     slot.patternIdBitset.setBit(patternId);
@@ -203,11 +216,11 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
 
                 QBitArray newBitset = currentSlot.patternIdBitset & possiblePatternsSet;
 
-                if(newBitset.count(true) == 0){
-                    qDebug()<<"unsolvable, again";
-                    currentSlot.collapsedId = -2;
-                    return {};
-                    //do something, return false, i dunno, handle uncollapsable
+                if(newBitset.count(true) == 0){ //ok, this is kinda weird. when it finds a possible uncollapsable slot, it just skips the whole propagation phase
+                    //this can result in it finding a better collapse that doesnt give uncollapsable results, maybe
+                    //qDebug()<<"unsolvable, again";
+                    //currentSlot.collapsedId = -2;
+                    return {}; //could also return the current updated, food for thoutgh
                 }
 
                 if(currentSlot.patternIdBitset != newBitset){
@@ -272,10 +285,11 @@ void WaveFunctionThread::run(){
     try{
     for(int i = 0; i < this->iters; i++){
         generateGridStep();
-        emit sendGrid(grid);
+        //emit sendGrid(grid); //TEST. grid update performance
         if(this->isInterruptionRequested()) break;
     }
     if(!this->isInterruptionRequested()) //or if generation failed/gave unsolvable
+        emit sendGrid(grid);
         emit finishedSuccessfully(this->collapseCandidatePos);
     }
     catch(std::exception e){

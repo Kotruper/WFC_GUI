@@ -29,6 +29,8 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     tpc_layout->addWidget(creatorView);
     ui->tpc_frame->setLayout(tpc_layout);
 
+    p_library = new PatternLibrary(ui->patternSelector, ui->patternDisplay, this);
+
     //connect(ui->generateTilesButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createTiles);
     //connect(ui->generatePatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createPatterns);
     connect(ui->extractPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::extractPatterns);
@@ -41,7 +43,16 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(ui->gridWidthSelector, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::changeGridWidth);
     connect(ui->gridHeightSelector, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::changeGridHeight);
     connect(ui->clearGridButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::clearGrid);
+    connect(ui->seedSpinBox, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::setSeed);
 
+    connect(tpCreator, &TilePatternCreator::patternsSignal, p_library, &PatternLibrary::setTilesPatterns);
+    connect(p_library, &PatternLibrary::displayPatternWeight, ui->weightDoubleSpinBox, &QDoubleSpinBox::setValue);
+    connect(p_library, &PatternLibrary::displayPatternEnabled, ui->enabledCheckbox, &QCheckBox::setChecked);
+    connect(ui->enabledCheckbox, &QCheckBox::clicked, p_library, &PatternLibrary::setEnabled);
+    connect(ui->weightDoubleSpinBox, &QDoubleSpinBox::valueChanged, p_library, &PatternLibrary::setWeight);
+    connect(ui->resetLibraryButton, &QPushButton::clicked, p_library, &PatternLibrary::resetPattern);
+    connect(ui->librarySendPatternsButton, &QPushButton::clicked, p_library, &PatternLibrary::sendOutTiles);
+    connect(p_library, &PatternLibrary::sendTilesPatterns, wfc_generator, &WaveFunctionCollapser::setPatterns);
 }
 
 WFC_GUI::~WFC_GUI()

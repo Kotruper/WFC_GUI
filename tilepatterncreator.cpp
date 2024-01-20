@@ -178,6 +178,7 @@ QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patte
         }
     }
     updatePatternCompability(newPatterns, patternSize);
+    //maybe normalize the weight?
     emit sendPatterns(newPatterns);
     return newPatterns;
 }

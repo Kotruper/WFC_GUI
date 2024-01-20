@@ -72,6 +72,10 @@ void Pattern::incrementWeight(int n){
     this->weight+=n;
 }
 
+void Pattern::setWeight(double newWeight){
+    this->weight = newWeight;
+}
+
 QPoint Pattern::indexToPos(const int &index){
     return QPoint(index % size, index / size);
 }

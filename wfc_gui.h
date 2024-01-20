@@ -5,6 +5,7 @@
 #include "tile.h"
 #include "tilepatterncreator.h"
 #include "wavefunctioncollapser.h"
+#include "patternlibrary.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class WFC_GUI; }
@@ -42,5 +43,6 @@ private:
 
     TilePatternCreator* tpCreator;
     WaveFunctionCollapser* wfc_generator;
+    PatternLibrary* p_library;
 };
 #endif // WFC_GUI_H

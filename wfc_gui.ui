@@ -491,16 +491,38 @@
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
         <item>
          <layout class="QFormLayout" name="formLayout">
           <property name="fieldGrowthPolicy">
            <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
           </property>
+          <property name="labelAlignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+          <property name="formAlignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
           <property name="leftMargin">
            <number>0</number>
           </property>
-          <item row="1" column="0">
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Generator Settings</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
            <widget class="QSpinBox" name="gridWidthSelector">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -509,8 +531,8 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="label_2">
+          <item row="1" column="0">
+           <widget class="QLabel" name="gridWidthSelectorlabel">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -522,8 +544,14 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
+          <item row="2" column="1">
            <widget class="QSpinBox" name="gridHeightSelector">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -535,17 +563,36 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
+          <item row="2" column="0">
            <widget class="QLabel" name="label_3">
             <property name="text">
              <string>Result Tile Height</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="0" colspan="2">
-           <widget class="QLabel" name="label_5">
+          <item row="3" column="1">
+           <widget class="QSpinBox" name="seedSpinBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimum">
+             <number>-1</number>
+            </property>
+            <property name="maximum">
+             <number>999999999</number>
+            </property>
+            <property name="value">
+             <number>-1</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="seedLabel">
             <property name="text">
-             <string>Generator Settings</string>
+             <string>Seed</string>
             </property>
            </widget>
           </item>
@@ -554,7 +601,7 @@
         <item>
          <widget class="QPushButton" name="generateGridButton">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -569,6 +616,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="generateStepButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>Generate Step</string>
           </property>
@@ -589,6 +642,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="clearGridButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>Clear</string>
           </property>
@@ -599,7 +658,7 @@
       <item>
        <widget class="QFrame" name="wfc_frame">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -706,7 +765,7 @@
            <x>10</x>
            <y>70</y>
            <width>181</width>
-           <height>151</height>
+           <height>131</height>
           </rect>
          </property>
          <layout class="QFormLayout" name="formLayout_2">
@@ -725,6 +784,15 @@
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="weightDoubleSpinBox">
+            <property name="maximum">
+             <double>9999999.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="stepType">
+             <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+            </property>
             <property name="value">
              <double>1.000000000000000</double>
             </property>
@@ -757,11 +825,37 @@
         <widget class="QGraphicsView" name="patternDisplay">
          <property name="geometry">
           <rect>
-           <x>129</x>
-           <y>7</y>
-           <width>61</width>
-           <height>61</height>
+           <x>110</x>
+           <y>10</y>
+           <width>81</width>
+           <height>81</height>
           </rect>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="resetLibraryButton">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>240</y>
+           <width>181</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Reset Patterns</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="librarySendPatternsButton">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>270</y>
+           <width>181</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Send to Generator</string>
          </property>
         </widget>
        </widget>
@@ -789,19 +883,6 @@
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <widget class="QPushButton" name="selectFileButton">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Select Image</string>
-             </property>
-            </widget>
-           </item>
            <item>
             <widget class="QLabel" name="label">
              <property name="sizePolicy">
@@ -863,6 +944,19 @@
               </size>
              </property>
             </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="selectFileButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Select Image</string>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QPushButton" name="extractPatternsButton">

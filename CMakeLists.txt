@@ -26,7 +26,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         tile.cpp tile.h main.cpp view.cpp view.h wfc_gui.cpp wfc_gui.h wfc_gui.ui
         tilepatterncreator.h tilepatterncreator.cpp
         wavefunctioncollapser.h wavefunctioncollapser.cpp
-        patternsettingseditor.h patternsettingseditor.cpp )
+        patternlibrary.h patternlibrary.cpp
+    )
 
 #    if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 #        qt_add_executable(WFC_GUI

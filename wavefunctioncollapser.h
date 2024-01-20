@@ -34,6 +34,7 @@ public:
     QList<TileSlot> permamentSlots;
     int gridWidth;
     int gridHeight;
+    int seed = -1;
 
     QList<TileSlot> createEmptyGrid(int width, int height); //fill whole grid with uncollapsed slots, add middle to collapsable list
     TileSlot& getSlotRefAt(const QPoint &pos);
@@ -50,6 +51,7 @@ public slots:
     void clearGrid();
     void updateGrid(QList<TileSlot>);
     void saveCandidates(QList<QPoint> candidates);
+    void setSeed(int newSeed);
 
 signals:
 
@@ -60,12 +62,20 @@ class WaveFunctionThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QList<QPoint> candidates, QObject *parent = nullptr);
+    explicit WaveFunctionThread(const QList<TileSlot> &starterGrid,
+                                const QList<Pattern> &patterns,
+                                int gridWidth,
+                                int gridHeight,
+                                int iters,
+                                QList<QPoint> candidates,
+                                int seed,
+                                QObject *parent = nullptr);
 
 private:
     int gridWidth;
     int gridHeight;
     int iters;
+    int seed;
     int attemptLimit = 5; //test
     QList<TileSlot> starterGrid;
     QList<TileSlot> grid;
