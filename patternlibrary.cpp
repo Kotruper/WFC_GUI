@@ -27,10 +27,13 @@ void PatternLibrary::setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPa
     this->patterns = newPatterns;
     this->originalPatterns = newPatterns;
 
-    patternSelector->clear();
-    tileSelector->clear();
     selectedPatternId = (patterns.isEmpty()) ? -1 : 0;
     selectedTileId = (tiles.isEmpty()) ? -1 : 0;
+
+    patternSelector->clear();
+    tileSelector->clear();
+    patternSelector->setCurrentIndex(selectedPatternId); //why doesnt work
+    tileSelector->setCurrentIndex(selectedTileId);
 
     for(const Pattern& p: patterns){
         patternSelector->insertItem(p.id, p.getElementIcon(tiles), QString("Pattern #").append(std::to_string(p.id)));

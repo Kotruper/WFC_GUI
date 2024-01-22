@@ -1,6 +1,7 @@
 #ifndef WAVEFUNCTIONCOLLAPSER_H
 #define WAVEFUNCTIONCOLLAPSER_H
 
+#include "qmutex.h"
 #include "qthread.h"
 #include "tile.h"
 #include "view.h"
@@ -19,6 +20,8 @@ struct TileSlot{
     bool operator<(const TileSlot &other) const{ return !(*this > other);}
 };
 
+class WaveFunctionThread;
+
 class WaveFunctionCollapser : public QObject
 {
     Q_OBJECT
@@ -26,6 +29,8 @@ public:
     explicit WaveFunctionCollapser(View *generatorView, QObject *parent = nullptr);
 
     View *generatorView;
+    WaveFunctionThread* wfc_thread;
+    QTimer *updateGridTimer;
 
     QList<Tile> tiles;
     QList<Pattern> patterns;
@@ -51,7 +56,7 @@ public slots:
     void changeGridHeight(int val);
     void changeGridWidth(int val);
     void clearGrid();
-    void updateGrid(QList<TileSlot>);
+    void updateGrid();
     void saveCandidates(QList<QPoint> candidates);
     void setSeed(int newSeed);
     void exportImage(QString filename);
@@ -84,6 +89,7 @@ private:
     QList<TileSlot> grid;
     QList<Pattern> patterns;
     QList<QPoint> collapseCandidatePos;
+    QMutex mutex;
 
     QPoint getSlotToCollapse();
     bool generateGridStep(); //the big one. makes false if something failed
@@ -92,6 +98,9 @@ private:
     TileSlot& getSlotRefAt(const QPoint &pos);
 
     void run() override;
+
+public:
+    const QList<TileSlot>& requestGrid(); //request updated maybe?
 
 signals:
     void sendGrid(QList<TileSlot>); //might instead change to accessing the grid within, and send updates to read and render

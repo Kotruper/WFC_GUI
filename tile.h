@@ -45,10 +45,13 @@ public:
     static const Tile& getWallTile();
 };
 
+class Pattern;
+
 class TileGraphicsItem : public QGraphicsItem
 {
 public:
     TileGraphicsItem(const Tile &tile);
+    TileGraphicsItem(const QList<Tile> &tiles);
 
     QRectF boundingRect() const override;
     QPainterPath shape() const override;
@@ -60,8 +63,7 @@ protected:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 */
 private:
-    Tile refTile;
-    QList<QPointF> stuff; //what
+    QList<Tile> refTiles;
 };
 
 using CompatibilityList = QList<QList<QBitArray>>; //dy, dx, patternIDs?, can store 128 * 128 patterns

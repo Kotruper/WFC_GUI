@@ -12,27 +12,36 @@ LibraryElement::LibraryElement(int id, int size, qreal weight): id(id), weight(w
 {
 }
 
-TileGraphicsItem::TileGraphicsItem(const Tile& tile): refTile(tile)
+TileGraphicsItem::TileGraphicsItem(const Tile& tile): refTiles{tile} //is this copying?
+{
+}
+
+TileGraphicsItem::TileGraphicsItem(const QList<Tile> &tiles): refTiles(tiles) //is this copying?
 {
 }
 
 QRectF TileGraphicsItem::boundingRect() const
 {
-    return this->refTile.pixmap.rect();
+    return this->refTiles.first().pixmap.rect();
 }
 
 QPainterPath TileGraphicsItem::shape() const
 {
     QPainterPath path;
-    path.addRect(this->refTile.pixmap.rect());
+    path.addRect(this->refTiles.first().pixmap.rect());
     return path;
 }
 
 void TileGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
-    painter->drawPixmap(this->boundingRect().toRect(), this->refTile.pixmap);
-
+    if(refTiles.size() <= 1)
+        painter->drawPixmap(this->boundingRect().toRect(), this->refTiles.first().pixmap);
+    else{
+        painter->setOpacity(1.0/refTiles.size());
+        for(const auto &t:refTiles)
+            painter->drawPixmap(this->boundingRect().toRect(), t.pixmap); //is there a pixmap blend?
+        }
 }
 
 Tile::Tile(int id, QImage image, int size, qreal weight)
