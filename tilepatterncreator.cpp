@@ -7,11 +7,12 @@ TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     tileSize = 1; //TODO: connect default values?
     patternSize = 3;
 }
-
-TilePatternThread::TilePatternThread(QImage baseImage, int tilePixelSize, int patternSize, QObject *parent)
-    : QThread{parent}, baseImage(baseImage), tileSize(tilePixelSize), patternSize(patternSize){
-
+/*
+TilePatternThread::TilePatternThread(QImage baseImage, int tilePixelSize, int patternSize, bool wallX, bool wallY, bool repeatX, bool repeatY, QObject *parent)
+    : QThread{parent}, baseImage(baseImage), tileSize(tilePixelSize), patternSize(patternSize), wallX(wallX), wallY(wallY), repeatX(repeatX), repeatY(repeatY)
+{
 }
+*/
 
 void TilePatternCreator::updateTiles(QList<Tile> newTiles){
     //qDebug("got into creating");
@@ -64,7 +65,7 @@ void TilePatternCreator::extractPatterns(){
     creatorView->view()->scene()->addPixmap(QPixmap::fromImage(baseImage));
     //lock ui except for cancel or smth
 
-    auto activeTilePatternThread = new TilePatternThread(this->baseImage,this->tileSize,this->patternSize,this); //currently not deleted?
+    auto activeTilePatternThread = new TilePatternThread(this,this); //currently not deleted?
 
     connect(activeTilePatternThread, &TilePatternThread::sendTiles, this, &TilePatternCreator::updateTiles);
     connect(activeTilePatternThread, &TilePatternThread::sendPatterns, this, &TilePatternCreator::updatePatterns);
@@ -88,6 +89,14 @@ void TilePatternCreator::setTileSize(int size){
 
 //////////////////////////////////////////////////////////////////
 
+TilePatternThread::TilePatternThread(TilePatternCreator *creator, QObject *parent)
+    : QThread{parent}, creator(creator)
+{
+    this->baseImage = creator->baseImage;
+    this->patternSize = creator->patternSize;
+    this->tileSize = creator->tileSize;
+}
+
 QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //sideEfect: fills the idMap
     QList<Tile> newTiles{};
 
@@ -110,11 +119,11 @@ QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //
                 idMap.append(newTiles.at(findIndex).id);
             }
 
-            emit sendTiles(newTiles);
             if(this->isInterruptionRequested())
                 return newTiles;
         }
     }
+    emit sendTiles(newTiles);
     qDebug()<<"IdMap: "<<idMap;
     return newTiles;
 }
@@ -171,7 +180,6 @@ QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patte
                 newPatterns[findIndex].incrementWeight();
             }
 
-            emit sendPatterns(newPatterns);
             if(this->isInterruptionRequested())
                 return newPatterns;
             //this->msleep(500); //holy shit this works

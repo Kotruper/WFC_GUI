@@ -26,6 +26,7 @@ signals:
 
 private slots:
     void on_selectFileButton_clicked();
+    void saveGeneratedImage();
 
 private:
     Ui::WFC_GUI *ui;

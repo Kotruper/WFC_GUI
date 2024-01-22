@@ -11,15 +11,10 @@ WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *paren
 
 QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){
     auto newGrid = QList<TileSlot>{};
-    int patternCount = patterns.size();
-
-    auto enabledPatterns = QBitArray{patternCount, true};
-    for(const auto &p:patterns)//if any tiles are disabled, make sure to 0 out those ones
-        if(!p.enabled) enabledPatterns.setBit(p.id, false);
 
     for(int y=0; y < height; y++){
         for(int x=0; x < width; x++){
-            newGrid.append(TileSlot{enabledPatterns, QPoint{x,y}});
+            newGrid.append(TileSlot{allowedPatterns, QPoint{x,y}});
         }
     }
     return newGrid;
@@ -30,7 +25,8 @@ bool WaveFunctionCollapser::isInBounds(const QPoint &pos){ //is this being used?
 }
 
 void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height){
-    this->generatorView->view()->scene()->clear(); //Needed?
+    auto scene = this->generatorView->view()->scene();
+    scene->clear(); //Needed?
     int tileSize = tiles.first().size;
 
     QGraphicsItemGroup* gridDisplay = new QGraphicsItemGroup(); //not much effect, maybe faster
@@ -41,7 +37,7 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
             short tileId = patterns.at(ts.collapsedId).tileIDs.first();
             item = new TileGraphicsItem(tiles.at(tileId));
         }
-        else if(ts.collapsedId == -1){ //Display uncollapsed tile
+        else if(ts.collapsedId == -1){ //Display uncollapsed tile, change to blended tiles
             QString text;
             if(ts.patternIdBitset.count(false) >= 0){ //PERF test, changed from ==
                 text = "Uncollapsed";
@@ -71,13 +67,37 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
         gridDisplay->addToGroup(item);
         //qDebug()<<tiles[ts.collapsedId].id;
     }
-    generatorView->view()->scene()->addItem(gridDisplay);
+    gridDisplay->setPos(0,0);
+    scene->addItem(gridDisplay);
+    scene->setSceneRect(scene->itemsBoundingRect());
+    //generatorView->view()->scene()->setSceneRect(0,0,gridWidth * tiles.first().size, gridHeight * tiles.first().size); //exporting?
+}
+
+QBitArray WaveFunctionCollapser::getAllowedPatterns(const QList<Pattern> &patterns, const QList<Tile> &tiles){
+    auto enabledPatterns = QBitArray{patterns.size(), true};
+
+    for(const auto &p:patterns)//if any patterns are disabled, make sure to 0 out those ones
+        if(!p.enabled) enabledPatterns.setBit(p.id, false);
+
+    auto disabledTilesIds = QList<int>{}; //if any tiles are disabled, disable the patterns that contain them. Is this slow?
+
+    for(const auto &t:tiles)
+        if(!t.enabled) disabledTilesIds.append(t.id);
+
+    for(const auto &id:disabledTilesIds){
+        for(const auto &p:patterns){
+            if(p.tileIDs.contains(id)) enabledPatterns.setBit(p.id, false);
+        }
+    }
+    return enabledPatterns;
 }
 
 void WaveFunctionCollapser::setPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns){
     this->tiles = newTiles;
     this->patterns = newPatterns;
-    this->grid = createEmptyGrid(gridWidth, gridHeight);
+    this->allowedPatterns = getAllowedPatterns(patterns, tiles); //calculates the initial pattern state
+
+    clearGrid();
     qDebug()<<"Received tiles ("<<newTiles.size()<<") and patterns("<<newPatterns.size()<<")";
 }
 
@@ -92,15 +112,19 @@ void WaveFunctionCollapser::changeGridWidth(int val){
 }
 
 void WaveFunctionCollapser::clearGrid(){
+    if(patterns.empty() || tiles.empty()) //maybe put out an exception? send an error signal?
+        return;
+
     this->grid = createEmptyGrid(gridWidth, gridHeight);
     this->generatorView->view()->scene()->clear();
+    displayGrid(grid,tiles,gridWidth,gridHeight);
 }
 
 void WaveFunctionCollapser::generate(int iters){
     if(patterns.empty() || tiles.empty()) //maybe put out an exception? send an error signal?
         return;
 
-    if(iters == 0){ //for 0 generate full grid
+    if(iters == 0){ //for 0 generate full grid. maybe count remaining
         iters = gridHeight * gridWidth;
         clearGrid();
     }
@@ -130,6 +154,21 @@ void WaveFunctionCollapser::saveCandidates(QList<QPoint> candidates){
 
 void WaveFunctionCollapser::setSeed(int newSeed){
     this->seed = newSeed;
+}
+
+void WaveFunctionCollapser::exportImage(QString filename){ //help
+
+    QGraphicsScene* scene = this->generatorView->view()->scene();
+    //QRectF sceneRect2 = {0,0, gridWidth * tiles.first().size * 100.0, gridHeight * tiles.first().size * 100.0}; //getting desperate
+
+    scene->clearSelection();                                                  // Selections would also render to the file
+    scene->setSceneRect(scene->itemsBoundingRect());                            // Re-shrink the scene to it's bounding contents
+    QImage image(scene->sceneRect().width(), scene->sceneRect().height(), QImage::Format_ARGB32);  // Create the image with the exact size of the shrunk scene
+    image.fill(Qt::transparent);                                              // Start all pixels transparent
+
+    QPainter painter(&image);
+    scene->render(&painter); //nope
+    image.save(filename);
 }
 
 ///////////////////////////////////////////////////////

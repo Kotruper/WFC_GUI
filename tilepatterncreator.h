@@ -6,6 +6,7 @@
 #include "tile.h"
 #include "view.h"
 
+
 class TilePatternCreator : public QObject
 {
     Q_OBJECT
@@ -43,9 +44,10 @@ class TilePatternThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit TilePatternThread(QImage baseImage, int tilePixelSize, int patternSize, QObject *parent = nullptr);
+    explicit TilePatternThread(TilePatternCreator* creator, QObject *parent = nullptr);
 
 private:
+    TilePatternCreator* creator;
     QList<short> idMap;
     QImage baseImage;
     int tileSize;

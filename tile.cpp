@@ -8,32 +8,37 @@
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 
+LibraryElement::LibraryElement(int id, int size, qreal weight): id(id), weight(weight), size(size)
+{
+}
+
 TileGraphicsItem::TileGraphicsItem(const Tile& tile): refTile(tile)
 {
 }
 
 QRectF TileGraphicsItem::boundingRect() const
 {
-    return this->refTile.image.rect();
+    return this->refTile.pixmap.rect();
 }
 
 QPainterPath TileGraphicsItem::shape() const
 {
     QPainterPath path;
-    path.addRect(this->refTile.image.rect());
+    path.addRect(this->refTile.pixmap.rect());
     return path;
 }
 
 void TileGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
-    painter->drawImage(this->boundingRect(),this->refTile.image);
+    painter->drawPixmap(this->boundingRect().toRect(), this->refTile.pixmap);
 
 }
 
-Tile::Tile(int id, QImage image, int size)
-    :id(id), image(image), size(size)
+Tile::Tile(int id, QImage image, int size, qreal weight)
+    :LibraryElement(id,size, weight), image(image)
 {
+    this->pixmap = QPixmap::fromImage(image);
 }
 
 void Tile::setWeight(qreal newWeight){
@@ -43,6 +48,19 @@ void Tile::setWeight(qreal newWeight){
 void Tile::incrementWeight(int n){
     this->weight+=n;
 }
+
+const Tile& Tile::getWallTile(){
+    static Tile wallTile = Tile(0,QImage(),0);
+    return wallTile;
+}
+
+QIcon Tile::getElementIcon(const QList<Tile> &tiles) const{
+    return QIcon(pixmap.scaled(32,32));
+}
+
+QGraphicsItem* Tile::getGraphicsItem(const QList<Tile> &tiles) const {
+    return new TileGraphicsItem(*this);
+};
 
 bool Tile::operator==(QImage &other){
     return this->image == other;
@@ -62,7 +80,7 @@ bool Tile::operator==(Tile &other){
 ////////////////////////////////////////////////////////////
 
 Pattern::Pattern(int id, QList<short> tileIDs, int size, int weight)
-    :id(id), tileIDs(tileIDs), size(size), weight(weight)
+    :LibraryElement(id, size, weight), tileIDs(tileIDs)
 {
     int patternCheckSize = size * 2 - 1;
     this->compatibilityList = CompatibilityList{patternCheckSize,QList<QBitArray>{patternCheckSize, QBitArray()}};
@@ -119,6 +137,19 @@ bool Pattern::operator==(Pattern &other){
     return this->tileIDs == other.tileIDs;
 }
 
+QIcon Pattern::getElementIcon(const QList<Tile> &tiles) const{ //Big test
+    int size = this->size * tiles.first().size;
+    QPixmap patternIcon = QPixmap(size, size);
+    patternIcon.fill(Qt::transparent);
+    QPainter painter{&patternIcon};
+    PatternGraphicsItem(*this, tiles).paint(&painter, nullptr, nullptr);
+    return QIcon(patternIcon.scaled(32,32));
+}
+
+QGraphicsItem* Pattern::getGraphicsItem(const QList<Tile> &tiles) const {
+    return new PatternGraphicsItem(*this, tiles);
+};
+
 PatternGraphicsItem::PatternGraphicsItem(const Pattern &pattern, const QList<Tile> &tiles): refPattern(pattern), tileset(tiles)
 {
 }
@@ -140,10 +171,10 @@ void PatternGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsIte
 {
     Q_UNUSED(widget);
     for(int i = 0; i<refPattern.tileIDs.size(); i++){
-        Tile tileToDraw = tileset.at(refPattern.tileIDs.at(i));
+        const Tile &tileToDraw = tileset.at(refPattern.tileIDs.at(i));
         QPoint offset = refPattern.indexToPos(i) * tileToDraw.size;
-        painter->setOpacity(1); //thingy
-        painter->drawImage(offset, tileToDraw.image);
+        //painter->setOpacity(1); //thingy
+        painter->drawPixmap(offset, tileToDraw.pixmap);
     }
 }
 /*

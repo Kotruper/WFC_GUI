@@ -32,6 +32,7 @@ public:
     QList<TileSlot> grid;
     QList<QPoint> collapseCandidatePos; //used between single steps
     QList<TileSlot> permamentSlots;
+    QBitArray allowedPatterns = {};
     int gridWidth;
     int gridHeight;
     int seed = -1;
@@ -39,6 +40,7 @@ public:
     QList<TileSlot> createEmptyGrid(int width, int height); //fill whole grid with uncollapsed slots, add middle to collapsable list
     TileSlot& getSlotRefAt(const QPoint &pos);
     bool isInBounds(const QPoint &pos);
+    QBitArray getAllowedPatterns(const QList<Pattern> &patterns, const QList<Tile> &tiles);
 
     void displayGrid(const QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height);
 
@@ -52,6 +54,7 @@ public slots:
     void updateGrid(QList<TileSlot>);
     void saveCandidates(QList<QPoint> candidates);
     void setSeed(int newSeed);
+    void exportImage(QString filename);
 
 signals:
 

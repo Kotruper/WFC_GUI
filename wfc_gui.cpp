@@ -29,7 +29,7 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     tpc_layout->addWidget(creatorView);
     ui->tpc_frame->setLayout(tpc_layout);
 
-    p_library = new PatternLibrary(ui->patternSelector, ui->patternDisplay, this);
+    p_library = new PatternLibrary(ui->patternSelector, ui->patternDisplay, ui->tileSelector, ui->tileDisplay, this);
 
     //connect(ui->generateTilesButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createTiles);
     //connect(ui->generatePatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createPatterns);
@@ -46,13 +46,22 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(ui->seedSpinBox, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::setSeed);
 
     connect(tpCreator, &TilePatternCreator::patternsSignal, p_library, &PatternLibrary::setTilesPatterns);
+    connect(ui->libraryTabs, &QTabWidget::currentChanged, p_library, &PatternLibrary::setSelectedTab);
     connect(p_library, &PatternLibrary::displayPatternWeight, ui->weightDoubleSpinBox, &QDoubleSpinBox::setValue);
+    connect(p_library, &PatternLibrary::displayPatternWeight, ui->weightDoubleSpinBox_2, &QDoubleSpinBox::setValue);
     connect(p_library, &PatternLibrary::displayPatternEnabled, ui->enabledCheckbox, &QCheckBox::setChecked);
-    connect(ui->enabledCheckbox, &QCheckBox::clicked, p_library, &PatternLibrary::setEnabled);
-    connect(ui->weightDoubleSpinBox, &QDoubleSpinBox::valueChanged, p_library, &PatternLibrary::setWeight);
-    connect(ui->resetLibraryButton, &QPushButton::clicked, p_library, &PatternLibrary::resetPattern);
-    connect(ui->librarySendPatternsButton, &QPushButton::clicked, p_library, &PatternLibrary::sendOutTiles);
+    connect(p_library, &PatternLibrary::displayPatternEnabled, ui->enabledCheckbox_2, &QCheckBox::setChecked);
+    connect(ui->enabledCheckbox, &QCheckBox::clicked, p_library, &PatternLibrary::setElementEnabled);
+    connect(ui->enabledCheckbox_2, &QCheckBox::clicked, p_library, &PatternLibrary::setElementEnabled);
+    connect(ui->weightDoubleSpinBox, &QDoubleSpinBox::valueChanged, p_library, &PatternLibrary::setElementWeight);
+    connect(ui->weightDoubleSpinBox_2, &QDoubleSpinBox::valueChanged, p_library, &PatternLibrary::setElementWeight);
+    connect(ui->resetLibraryButton, &QPushButton::clicked, p_library, &PatternLibrary::resetElement);
+    connect(ui->resetLibraryButton_2, &QPushButton::clicked, p_library, &PatternLibrary::resetElement);
+    connect(ui->librarySendPatternsButton, &QPushButton::clicked, p_library, &PatternLibrary::sendOutTilesPatterns);
+    connect(ui->librarySendPatternsButton_2, &QPushButton::clicked, p_library, &PatternLibrary::sendOutTilesPatterns);
     connect(p_library, &PatternLibrary::sendTilesPatterns, wfc_generator, &WaveFunctionCollapser::setPatterns);
+
+    connect(ui->saveImageButton, &QPushButton::clicked, this, &WFC_GUI::saveGeneratedImage);
 }
 
 WFC_GUI::~WFC_GUI()
@@ -64,4 +73,9 @@ void WFC_GUI::on_selectFileButton_clicked()
 {
     QString filename = QFileDialog::getOpenFileName(this,tr("Open Image"), "C:\\Users\\kotru\\Documents\\Studia_7\\Inzynierka", tr("Image files (*.png *.jpg *.bmp)"));
     tpCreator->setImage(filename);
+}
+
+void WFC_GUI::saveGeneratedImage(){
+    QString filename = QFileDialog::getSaveFileName(this,tr("Save Result"), "C:\\Users\\kotru\\Documents\\Studia_7\\Inzynierka\\wfc_result.png", tr("Image files (*.png *.jpg *.bmp)"));
+    wfc_generator->exportImage(filename);
 }
