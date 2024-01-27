@@ -2,10 +2,33 @@
 #include "QFileDialog"
 #include "qbitarray.h"
 
+/* //nah, I dunno
+void TPC_Scene::dropEvent(QGraphicsSceneDragDropEvent* e){
+    if (e->mimeData()->hasImage()) {
+        qDebug()<<"Drop detected!";
+        auto tpc = (TilePatternCreator*)parent();
+        tpc->setImage(e->mimeData()->urls().first().toLocalFile());
+        e->accept();
+    } else {
+        QGraphicsScene::dropEvent(e);
+    }
+}
+void TPC_Scene::dragEnterEvent(QGraphicsSceneDragDropEvent* e){
+    e->accept();
+    QGraphicsScene::dragEnterEvent(e);
+}
+
+void TPC_Scene::dragMoveEvent(QGraphicsSceneDragDropEvent* e){
+    e->accept();
+    QGraphicsScene::dragMoveEvent(e);
+}
+*/
 TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     : QObject{parent}, creatorView(view){
-    tileSize = 1; //TODO: connect default values?
-    patternSize = 3;
+    setTileSize(1);
+    setPatternSize(3);
+    //creatorView->setAcceptDrops(true);
+    //creatorView->view()->setAcceptDrops(true);
 }
 /*
 TilePatternThread::TilePatternThread(QImage baseImage, int tilePixelSize, int patternSize, bool wallX, bool wallY, bool repeatX, bool repeatY, QObject *parent)
@@ -27,6 +50,7 @@ void TilePatternCreator::updateTiles(QList<Tile> newTiles){
             //id->setPos(0,-tileSize);
             id->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
             id->setScale(0.1);
+            id->setPos(0, -2);
             creatorView->view()->scene()->addItem(item);
             //qDebug()<<tiles[i].id;
         }
@@ -41,12 +65,13 @@ void TilePatternCreator::updatePatterns(QList<Pattern> newPatterns){
     auto displayPatterns = [&](QList<Pattern> patterns, int yOffset){
         for (int i = 0; i < patterns.size(); ++i) { //Display the tiles
             QGraphicsItem *item = new PatternGraphicsItem(patterns[i],tiles);
-            item->setPos(QPointF(i*(patternSize*tileSize + tileSize), yOffset));
+            item->setPos(QPointF((i%20)*(patternSize*tileSize + tileSize), yOffset + (i/20)*(patternSize*tileSize + tileSize)));
 
             auto id = new QGraphicsSimpleTextItem(QString::number(patterns[i].id), item);
             //id->setPos(0,-patternSize);
             id->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
             id->setScale(0.1);
+            id->setPos(0, -2);
             creatorView->view()->scene()->addItem(item);
             //qDebug()<<tiles[i].id;
         }
@@ -55,9 +80,11 @@ void TilePatternCreator::updatePatterns(QList<Pattern> newPatterns){
 }
 
 void TilePatternCreator::setImage(QString filename){ //will need some changes for the wall, maybe here or in tiledRead?
-    creatorView->view()->scene()->clear();
+    auto currentScene = creatorView->view()->scene();
+    currentScene->clear();
     this->baseImage.load(filename);
-    creatorView->view()->scene()->addPixmap(QPixmap::fromImage(baseImage));
+    currentScene->addPixmap(QPixmap::fromImage(baseImage));
+    creatorView->view()->fitInView(baseImage.rect(), Qt::AspectRatioMode::KeepAspectRatio);
 }
 
 void TilePatternCreator::extractPatterns(){
@@ -81,10 +108,12 @@ void TilePatternCreator::exportPatterns(){
 
 void TilePatternCreator::setPatternSize(int size){
     this->patternSize = size;
+    ((GraphicsView*)this->creatorView->view())->setPatternSize(size); //slighty cursed. Fun :)
 }
 
 void TilePatternCreator::setTileSize(int size){
     this->tileSize = size;
+    ((GraphicsView*)this->creatorView->view())->setTileSize(size);
 }
 
 //////////////////////////////////////////////////////////////////
@@ -128,6 +157,18 @@ QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //
     return newTiles;
 }
 
+void debugCompabilityCheck(const QList<Pattern> &patterns){
+    for(const auto &pat:patterns){
+        for(const auto &yComp : pat.compatibilityList){
+            for(const auto &xComp : yComp){
+                if(xComp.count(true) == 0){
+                    qDebug()<<"found a problem in the patterns";
+                }
+            }
+        }
+    }
+}
+
 void TilePatternThread::updatePatternCompability(QList<Pattern> &patterns, int patternSize){
     for(Pattern &pRef: patterns){
         for(int dy = -patternSize + 1; dy < patternSize; dy++){
@@ -145,6 +186,7 @@ void TilePatternThread::updatePatternCompability(QList<Pattern> &patterns, int p
             }
         }
     }
+    //debugCompabilityCheck(patterns);
 }
 
 QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patternSize){

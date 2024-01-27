@@ -1,4 +1,5 @@
 #include "patternlibrary.h"
+#include "qtimer.h"
 
 PatternLibrary::PatternLibrary(QComboBox *patternSelector, QGraphicsView *patternView, QComboBox *tileSelector, QGraphicsView *tileView, QObject *parent)
     : QObject{parent}, patternSelector(patternSelector), patternView(patternView), tileSelector(tileSelector), tileView(tileView)
@@ -12,6 +13,8 @@ PatternLibrary::PatternLibrary(QComboBox *patternSelector, QGraphicsView *patter
     tileView->setScene(new QGraphicsScene(this));
     connect(patternSelector, &QComboBox::activated, this, &PatternLibrary::showElementInfo);
     connect(tileSelector, &QComboBox::activated, this, &PatternLibrary::showElementInfo);
+
+    QTimer::singleShot(100, [&](){emit setUIEnabled(false);}); //funky workaround :)))
 }
 
 LibraryElement& PatternLibrary::getElementRefAt(int id){
@@ -32,8 +35,10 @@ void PatternLibrary::setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPa
 
     patternSelector->clear();
     tileSelector->clear();
-    patternSelector->setCurrentIndex(selectedPatternId); //why doesnt work
-    tileSelector->setCurrentIndex(selectedTileId);
+    patternView->scene()->clear();
+    tileView->scene()->clear();
+
+    emit setUIEnabled(patterns.isEmpty() ? false : true);
 
     for(const Pattern& p: patterns){
         patternSelector->insertItem(p.id, p.getElementIcon(tiles), QString("Pattern #").append(std::to_string(p.id)));
@@ -41,6 +46,11 @@ void PatternLibrary::setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPa
     for(const Tile& t: tiles){
         tileSelector->insertItem(t.id, t.getElementIcon({}), QString("Tile #").append(std::to_string(t.id)));
     }
+
+    showElementInfo(patternsTabSelected ? selectedPatternId : selectedTileId);
+
+    patternSelector->setCurrentIndex(selectedPatternId); //why doesnt work
+    tileSelector->setCurrentIndex(selectedTileId);
 }
 
 void PatternLibrary::setSelectedTab(int tabIndex){
@@ -76,6 +86,7 @@ void PatternLibrary::showElementInfo(int id){
     elementView->scene()->clear();
     auto elementItem = selectedElement.getGraphicsItem(tiles);
     elementView->scene()->addItem(elementItem);
+    elementView->scene()->setSceneRect(elementItem->boundingRect());
     elementView->fitInView(elementItem);
 }
 

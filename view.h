@@ -20,11 +20,17 @@ class GraphicsView : public QGraphicsView
     Q_OBJECT
 public:
     GraphicsView(View *v) : QGraphicsView(), view(v) { }
+    int patternSize = -1;
+    int tileSize = -1;
+
+    void setTileSize(int size);
+    void setPatternSize(int size);
 
 protected:
 #if QT_CONFIG(wheelevent)
     void wheelEvent(QWheelEvent *) override;
 #endif
+    void drawForeground(QPainter *painter, const QRectF &rect) override;
 
 private:
     View *view;
@@ -34,7 +40,7 @@ class View : public QFrame
 {
     Q_OBJECT
 public:
-    explicit View(const QString &name, QWidget *parent = nullptr);
+    explicit View(QWidget *parent = nullptr);
 
     QGraphicsView *view() const;
 

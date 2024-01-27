@@ -5,8 +5,18 @@
 #include <QThread>
 #include "tile.h"
 #include "view.h"
-
-
+/* //nah
+class TPC_Scene : public QGraphicsScene
+{
+    Q_OBJECT
+public:
+    TPC_Scene(QWidget *parent = nullptr) : QGraphicsScene(parent) {}
+protected:
+    void dragEnterEvent(QGraphicsSceneDragDropEvent*) override;
+    void dragMoveEvent(QGraphicsSceneDragDropEvent*) override;
+    void dropEvent(QGraphicsSceneDragDropEvent*) override;
+};
+*/
 class TilePatternCreator : public QObject
 {
     Q_OBJECT

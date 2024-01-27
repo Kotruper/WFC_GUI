@@ -62,6 +62,7 @@ protected:
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 */
+    virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* e) override;
 private:
     QList<Tile> refTiles;
 };

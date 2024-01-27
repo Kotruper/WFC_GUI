@@ -8,6 +8,17 @@
 #include <QObject>
 #include <QBitArray>
 
+class TileSlotDisplayItem : public QGraphicsItem
+{
+public:
+    TileSlotDisplayItem(QGraphicsItem *parent = nullptr) : QGraphicsItem(parent) {}
+    TileSlotDisplayItem(TileSlotDisplayItem& t) : QGraphicsItem(){};
+protected:
+    void dragEnterEvent(QGraphicsSceneDragDropEvent*) override;
+    void dragMoveEvent(QGraphicsSceneDragDropEvent*) override;
+    void dropEvent(QGraphicsSceneDragDropEvent*) override;
+};
+
 struct TileSlot{
     QBitArray patternIdBitset; //should be a list?
     QPoint pos;
@@ -60,9 +71,12 @@ public slots:
     void saveCandidates(QList<QPoint> candidates);
     void setSeed(int newSeed);
     void exportImage(QString filename);
+    void setUIEnabled(bool enabled);
+    void cancelGenerate();
 
 signals:
-
+    void setEnabledButtons(bool enabled);
+    void toggleGenerateCancelButton(QString name);
 
 };
 
@@ -93,7 +107,7 @@ private:
 
     QPoint getSlotToCollapse();
     bool generateGridStep(); //the big one. makes false if something failed
-    void collapseSlot(QPoint &slotPos, const QList<Pattern> &patterns); //collapses a slot using weighted random. returns pattern id (should use tile weights too?)
+    void collapseSlot(const QPoint &slotPos, const QList<Pattern> &patterns); //collapses a slot using weighted random. returns pattern id (should use tile weights too?)
     QList<QPoint> propagateUpdate(const QPoint &collapsed, const QList<Pattern> &patterns);
     TileSlot& getSlotRefAt(const QPoint &pos);
 

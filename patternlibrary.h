@@ -32,6 +32,7 @@ signals:
     void sendTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns);
     void displayPatternWeight(double weight);
     void displayPatternEnabled(bool checked);
+    void setUIEnabled(bool enabled);
 
 public slots:
     void setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns);

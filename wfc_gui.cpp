@@ -13,7 +13,7 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle(tr("Wave Function Collapse GUI"));
 
-    View *wfcView = new View("Tiles view");
+    View *wfcView = new View(this);
     wfcView->view()->setScene(scene);
     wfc_generator = new WaveFunctionCollapser(wfcView,this);
 
@@ -21,7 +21,7 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     wfc_layout->addWidget(wfcView);
     ui->wfc_frame->setLayout(wfc_layout);
 
-    View *creatorView = new View("Pattern creator view");
+    View *creatorView = new View(this);
     creatorView->view()->setScene(creatorScene);
     tpCreator = new TilePatternCreator(creatorView, this);
 
@@ -40,10 +40,15 @@ WFC_GUI::WFC_GUI(QWidget *parent)
 
     connect(ui->generateGridButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::generate);
     connect(ui->generateStepButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::generateOneStep);
+    connect(ui->cancelGenerateButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::cancelGenerate);
     connect(ui->gridWidthSelector, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::changeGridWidth);
     connect(ui->gridHeightSelector, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::changeGridHeight);
     connect(ui->clearGridButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::clearGrid);
     connect(ui->seedSpinBox, &QSpinBox::valueChanged, wfc_generator, &WaveFunctionCollapser::setSeed);
+    connect(wfc_generator, &WaveFunctionCollapser::setEnabledButtons, ui->generateStepButton, &QPushButton::setEnabled);
+    connect(wfc_generator, &WaveFunctionCollapser::setEnabledButtons, ui->clearGridButton, &QPushButton::setEnabled);
+    connect(wfc_generator, &WaveFunctionCollapser::setEnabledButtons, ui->generateGridButton, &QPushButton::setEnabled);
+    connect(wfc_generator, &WaveFunctionCollapser::setEnabledButtons, ui->cancelGenerateButton, &QPushButton::setDisabled);
 
     connect(tpCreator, &TilePatternCreator::patternsSignal, p_library, &PatternLibrary::setTilesPatterns);
     connect(ui->libraryTabs, &QTabWidget::currentChanged, p_library, &PatternLibrary::setSelectedTab);
@@ -60,6 +65,7 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(ui->librarySendPatternsButton, &QPushButton::clicked, p_library, &PatternLibrary::sendOutTilesPatterns);
     connect(ui->librarySendPatternsButton_2, &QPushButton::clicked, p_library, &PatternLibrary::sendOutTilesPatterns);
     connect(p_library, &PatternLibrary::sendTilesPatterns, wfc_generator, &WaveFunctionCollapser::setPatterns);
+    connect(p_library, &PatternLibrary::setUIEnabled, ui->libraryTabs, &QTabWidget::setEnabled);
 
     connect(ui->saveImageButton, &QPushButton::clicked, this, &WFC_GUI::saveGeneratedImage);
 }

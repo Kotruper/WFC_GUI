@@ -43,6 +43,10 @@ void TileGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
             painter->drawPixmap(this->boundingRect().toRect(), t.pixmap); //is there a pixmap blend?
         }
 }
+void TileGraphicsItem::dragEnterEvent(QGraphicsSceneDragDropEvent* e){
+    qDebug()<<"test tgi drageEnter event";
+    QGraphicsItem::dragEnterEvent(e);
+}
 
 Tile::Tile(int id, QImage image, int size, qreal weight)
     :LibraryElement(id,size, weight), image(image)
