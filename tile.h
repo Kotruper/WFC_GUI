@@ -10,6 +10,23 @@
 
 //Should seperate tile and pattern?
 
+enum class WallPos : int{ //is this the right place?
+    None = 0,
+    RightWall, //modulo gives 1, wall on the right
+    BottomWall, //greater than 1, wall on the bottom
+    BothWall
+};
+
+constexpr enum WallPos operator |( const enum WallPos selfValue, const enum WallPos inValue ){
+    return (enum WallPos)(uint32_t(selfValue) | uint32_t(inValue));
+}
+constexpr enum WallPos operator &( const enum WallPos selfValue, const enum WallPos inValue ){
+    return (enum WallPos)(uint32_t(selfValue) & uint32_t(inValue));
+}
+constexpr enum WallPos operator ^( const enum WallPos selfValue, const enum WallPos inValue ){
+    return (enum WallPos)(uint32_t(selfValue) ^ uint32_t(inValue));
+}
+
 class Tile;
 
 class LibraryElement
@@ -31,6 +48,7 @@ public:
     Tile(int id, QImage image, int size, qreal weight = 1.0);
     QImage image;
     QPixmap pixmap;
+    bool isWall = false;
 
     void incrementWeight(int incVal = 1);
     virtual void setWeight(qreal newWeight) override;
@@ -42,7 +60,9 @@ public:
     bool operator== (QImage &image);
     bool operator== (const QImage &image) const;
     static void displayTiles(QList<Tile> tiles, int x, int y);
-    static const Tile& getWallTile();
+    static const Tile getWallTile(int size);
+    static void setWallTile(Tile wallTile);
+
 };
 
 class Pattern;
@@ -88,6 +108,8 @@ public:
     QBitArray& getCompabilityListRefAt(const QPoint &pos);
     bool isCompatibleAt(const Pattern &otherP, const QPoint &pos);
     static void displayPatterns(QList<Pattern> patterns, int x, int y);
+    const bool isWallPattern() const;
+    const bool isCornerWallPattern() const;
 
     bool operator== (const Pattern &pattern) const;
     bool operator== (Pattern &pattern);

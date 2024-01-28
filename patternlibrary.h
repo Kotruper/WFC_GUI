@@ -26,16 +26,18 @@ public:
     QGraphicsView *patternView;
     int selectedPatternId = -1;
 
+    WallPos wallPos;
+
     LibraryElement& getElementRefAt(int id);
 
 signals:
-    void sendTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns);
+    void sendTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns, WallPos wallPos);
     void displayPatternWeight(double weight);
     void displayPatternEnabled(bool checked);
     void setUIEnabled(bool enabled);
 
 public slots:
-    void setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns);
+    void setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns, WallPos wallPos);
     void setSelectedTab(int tabNum);
     void showElementInfo(int id);
     void setElementEnabled(bool enabled);

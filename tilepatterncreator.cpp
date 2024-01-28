@@ -102,7 +102,7 @@ void TilePatternCreator::extractPatterns(){
 }
 
 void TilePatternCreator::exportPatterns(){
-    emit patternsSignal(this->tiles, this->patterns);
+    emit patternsSignal(this->tiles, this->patterns, this->wallPos); //this wallPos could get unsynced, but unlikely
     //unlock ui. will also need to do if interrupted
 }
 
@@ -116,6 +116,13 @@ void TilePatternCreator::setTileSize(int size){
     ((GraphicsView*)this->creatorView->view())->setTileSize(size);
 }
 
+void TilePatternCreator::toggleXWall(){
+    this->wallPos = wallPos ^ WallPos::BottomWall;
+}
+void TilePatternCreator::toggleYWall(){
+    this->wallPos = wallPos ^ WallPos::RightWall;
+}
+
 //////////////////////////////////////////////////////////////////
 
 TilePatternThread::TilePatternThread(TilePatternCreator *creator, QObject *parent)
@@ -124,6 +131,7 @@ TilePatternThread::TilePatternThread(TilePatternCreator *creator, QObject *paren
     this->baseImage = creator->baseImage;
     this->patternSize = creator->patternSize;
     this->tileSize = creator->tileSize;
+    this->wallPos = creator->wallPos;
 }
 
 QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //sideEfect: fills the idMap
@@ -133,6 +141,10 @@ QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //
     int mapWidth = baseImage.width() / tileSize;
 
     idMap.clear();
+
+    if(wallPos > WallPos::None){
+        newTiles.append(Tile::getWallTile(tileSize));
+    }
 
     for(int iY = 0; iY < mapHeight; iY++){
         for(int iX = 0; iX < mapWidth; iX++){
@@ -147,9 +159,17 @@ QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //
                 newTiles[findIndex].incrementWeight();
                 idMap.append(newTiles.at(findIndex).id);
             }
+            if(iX == (mapWidth-1) && (bool)(wallPos & WallPos::RightWall)){ //if YWall
+                idMap.append(0); //id of WallTile
+            }
 
             if(this->isInterruptionRequested())
                 return newTiles;
+        }
+    }
+    if((bool)(wallPos & WallPos::BottomWall)){
+        for(int iX = 0; iX <= mapWidth; iX++){
+            idMap.append(0);
         }
     }
     emit sendTiles(newTiles);
@@ -195,6 +215,10 @@ QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patte
     int mapHeight = baseImage.height() / tileSize;
     int mapWidth = baseImage.width() / tileSize;
 
+    if((bool)(wallPos & WallPos::BottomWall)) mapHeight++;
+    if((bool)(wallPos & WallPos::RightWall)) mapWidth++;
+
+
     auto getAdjacent = [&](int x, int y){ //wrapping implemented
         QList<short> adjacent{};
         for(int dy = 0; dy < patternSize; dy++){
@@ -207,11 +231,8 @@ QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patte
         return adjacent;
     };
 
-    int patternYlimit = mapHeight;// - (patternSize - 1); //will need to change with wrapping to just mapHeight
-    int patternXlimit = mapWidth;// - (patternSize - 1); //will need to change with wrapping
-
-    for(int iY = 0; iY < patternYlimit; iY++){ //pattern y limit
-        for(int iX = 0; iX < patternXlimit; iX++){ //pattern x limit
+    for(int iY = 0; iY < mapHeight; iY++){ //pattern y limit
+        for(int iX = 0; iX < mapWidth; iX++){ //pattern x limit
             QList<short> potentialPattern = getAdjacent(iX, iY);
             int findIndex = newPatterns.indexOf(potentialPattern);
             if(findIndex == -1){

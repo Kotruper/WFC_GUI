@@ -62,8 +62,15 @@ void Tile::incrementWeight(int n){
     this->weight+=n;
 }
 
-const Tile& Tile::getWallTile(){
-    static Tile wallTile = Tile(0,QImage(),0);
+const Tile Tile::getWallTile(int tileSize){
+    QImage img{tileSize,tileSize,QImage::Format_ARGB32};
+    QPainter paint{&img};
+    paint.setPen(QPen(QBrush(Qt::red,Qt::BrushStyle::SolidPattern),0));
+    paint.drawLine(0,0,tileSize,tileSize);
+    paint.drawLine(0,tileSize,tileSize,0);
+    Tile wallTile(0,img,tileSize);
+    wallTile.isWall = true;
+
     return wallTile;
 }
 
@@ -132,6 +139,14 @@ bool Pattern::isCompatibleAt(const Pattern &otherPattern, const QPoint &pos){// 
         }
     }
     return true;
+}
+
+const bool Pattern::isWallPattern() const{ //ONLY IF WALLS ARE ENABLED. Maybe reserve 0 for walls?
+    return this->tileIDs.at(0) == 0;
+}
+
+const bool Pattern::isCornerWallPattern() const{ //ONLY IF WALLS ARE ENABLED. BREAKS WITH PATTERN SIZE == 1 Maybe reserve 0 for walls?
+    return tileIDs.at(0) == 0 && tileIDs.at(1) == 0 && tileIDs.at(size) == 0;
 }
 
 bool Pattern::operator==(QList<short> &other){

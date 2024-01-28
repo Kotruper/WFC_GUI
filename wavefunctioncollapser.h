@@ -25,8 +25,8 @@ struct TileSlot{
     short collapsedId = -1;
     bool isPermament = false;
 
-    bool operator>(const TileSlot &other) const{ //a > b, when a has more options
-        return this->patternIdBitset.count(false) < other.patternIdBitset.count(false);
+    bool operator>(const TileSlot &other) const{ //a > b, when a has more options (entropy a > entropy b)
+        return this->patternIdBitset.count(true) > other.patternIdBitset.count(true);
     }
     bool operator<(const TileSlot &other) const{ return !(*this > other);}
 };
@@ -52,16 +52,18 @@ public:
     int gridWidth;
     int gridHeight;
     int seed = -1;
+    WallPos wallPos = WallPos::None;
 
     QList<TileSlot> createEmptyGrid(int width, int height); //fill whole grid with uncollapsed slots, add middle to collapsable list
     TileSlot& getSlotRefAt(const QPoint &pos);
     bool isInBounds(const QPoint &pos);
     QBitArray getAllowedPatterns(const QList<Pattern> &patterns, const QList<Tile> &tiles);
+    QBitArray getWallPatterns(const QList<Pattern> &patterns, const QList<Tile> &tiles, const WallPos &wallPos);
 
     void displayGrid(const QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height);
 
 public slots:
-    void setPatterns(QList<Tile> tiles, QList<Pattern> patterns);
+    void setPatterns(QList<Tile> tiles, QList<Pattern> patterns, WallPos wallPos);
     void generate(int iter = -1); //send number of iterations maybe? by default, do all
     void generateOneStep();
     void changeGridHeight(int val);
@@ -91,6 +93,7 @@ public:
                                 int iters,
                                 QList<QPoint> candidates,
                                 int seed,
+                                WallPos wallPos,
                                 QObject *parent = nullptr);
 
 private:
@@ -103,6 +106,7 @@ private:
     QList<TileSlot> grid;
     QList<Pattern> patterns;
     QList<QPoint> collapseCandidatePos;
+    WallPos wallPos;
     QMutex mutex;
 
     QPoint getSlotToCollapse();

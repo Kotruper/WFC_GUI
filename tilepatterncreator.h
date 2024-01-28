@@ -30,18 +30,21 @@ public:
     QImage baseImage;
     int tileSize;
     int patternSize;
+    WallPos wallPos = WallPos::BothWall; //both walls means no perceived looping
 
     void displayTiles();
     void displayPatterns();
 
 signals:
-    void patternsSignal(QList<Tile> tiles, QList<Pattern> patterns);
+    void patternsSignal(QList<Tile> tiles, QList<Pattern> patterns, WallPos wallPos);
 
 public slots:
     void extractPatterns();
     void setImage(QString filename);
     void setTileSize(int size);
     void setPatternSize(int size);
+    void toggleXWall();
+    void toggleYWall();
 
     void updateTiles(QList<Tile> tiles);
     void updatePatterns(QList<Pattern> patterns);
@@ -62,6 +65,7 @@ private:
     QImage baseImage;
     int tileSize;
     int patternSize;
+    WallPos wallPos;
 
     QList<Pattern> generatePatterns(QList<short> idMap, int patternSize);
     QList<Tile> generateTiles(QImage baseImage, int tileSize);

@@ -36,6 +36,8 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(ui->extractPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::extractPatterns);
     connect(ui->tilePixelSizeInput, &QSpinBox::valueChanged, tpCreator, &TilePatternCreator::setTileSize);
     connect(ui->patternSizeInput, &QSpinBox::valueChanged, tpCreator, &TilePatternCreator::setPatternSize);
+    connect(ui->XWallCheckbox, &QCheckBox::clicked, tpCreator, &TilePatternCreator::toggleXWall);
+    connect(ui->YWallCheckbox, &QCheckBox::clicked, tpCreator, &TilePatternCreator::toggleYWall);
     connect(tpCreator, &TilePatternCreator::patternsSignal, wfc_generator, &WaveFunctionCollapser::setPatterns);
 
     connect(ui->generateGridButton, &QPushButton::clicked, wfc_generator, &WaveFunctionCollapser::generate);

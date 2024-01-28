@@ -24,11 +24,12 @@ LibraryElement& PatternLibrary::getElementRefAt(int id){
         return tiles[id];
 }
 
-void PatternLibrary::setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns){
+void PatternLibrary::setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPatterns, WallPos wallPos){
     this->tiles = newTiles;
     this->originalTiles = newTiles;
     this->patterns = newPatterns;
     this->originalPatterns = newPatterns;
+    this->wallPos = wallPos;
 
     selectedPatternId = (patterns.isEmpty()) ? -1 : 0;
     selectedTileId = (tiles.isEmpty()) ? -1 : 0;
@@ -41,10 +42,12 @@ void PatternLibrary::setTilesPatterns(QList<Tile> newTiles, QList<Pattern> newPa
     emit setUIEnabled(patterns.isEmpty() ? false : true);
 
     for(const Pattern& p: patterns){
-        patternSelector->insertItem(p.id, p.getElementIcon(tiles), QString("Pattern #").append(std::to_string(p.id)));
+        QString name = QString("Pattern #").append(std::to_string(p.id));
+        patternSelector->insertItem(p.id, p.getElementIcon(tiles), name);
     }
     for(const Tile& t: tiles){
-        tileSelector->insertItem(t.id, t.getElementIcon({}), QString("Tile #").append(std::to_string(t.id)));
+        QString name = (t.isWall) ? ("Border Tile") : QString("Tile #").append(std::to_string(t.id));
+        tileSelector->insertItem(t.id, t.getElementIcon({}), name);
     }
 
     showElementInfo(patternsTabSelected ? selectedPatternId : selectedTileId);
@@ -121,7 +124,7 @@ void PatternLibrary::resetElement(){
 }
 
 void PatternLibrary::sendOutTilesPatterns(){
-    emit sendTilesPatterns(tiles, patterns);
+    emit sendTilesPatterns(tiles, patterns, wallPos);
 }
 
 

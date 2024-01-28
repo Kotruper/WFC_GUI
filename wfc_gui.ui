@@ -1175,10 +1175,30 @@
            <item>
             <widget class="QSpinBox" name="patternSizeInput">
              <property name="minimum">
-              <number>1</number>
+              <number>2</number>
              </property>
              <property name="value">
               <number>3</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="YWallCheckbox">
+             <property name="text">
+              <string>Loop X pos</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="XWallCheckbox">
+             <property name="text">
+              <string>Loop Y pos</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
