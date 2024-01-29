@@ -2,42 +2,14 @@
 #include "QFileDialog"
 #include "qbitarray.h"
 
-/* //nah, I dunno
-void TPC_Scene::dropEvent(QGraphicsSceneDragDropEvent* e){
-    if (e->mimeData()->hasImage()) {
-        qDebug()<<"Drop detected!";
-        auto tpc = (TilePatternCreator*)parent();
-        tpc->setImage(e->mimeData()->urls().first().toLocalFile());
-        e->accept();
-    } else {
-        QGraphicsScene::dropEvent(e);
-    }
-}
-void TPC_Scene::dragEnterEvent(QGraphicsSceneDragDropEvent* e){
-    e->accept();
-    QGraphicsScene::dragEnterEvent(e);
-}
-
-void TPC_Scene::dragMoveEvent(QGraphicsSceneDragDropEvent* e){
-    e->accept();
-    QGraphicsScene::dragMoveEvent(e);
-}
-*/
 TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     : QObject{parent}, creatorView(view){
     setTileSize(1);
     setPatternSize(3);
 
-    creatorView->setAcceptDrops(true);
     creatorView->view()->setAcceptDrops(true);
     connect((GraphicsView*)creatorView->view(), &GraphicsView::sendFile, this, &TilePatternCreator::setImage);
 }
-/*
-TilePatternThread::TilePatternThread(QImage baseImage, int tilePixelSize, int patternSize, bool wallX, bool wallY, bool repeatX, bool repeatY, QObject *parent)
-    : QThread{parent}, baseImage(baseImage), tileSize(tilePixelSize), patternSize(patternSize), wallX(wallX), wallY(wallY), repeatX(repeatX), repeatY(repeatY)
-{
-}
-*/
 
 void TilePatternCreator::updateTiles(QList<Tile> newTiles){
     //qDebug("got into creating");
@@ -142,11 +114,13 @@ QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //
 
     int mapHeight = baseImage.height() / tileSize;
     int mapWidth = baseImage.width() / tileSize;
+    int wallWidth = 0;
 
     idMap.clear();
 
     if(wallPos > WallPos::None){
         newTiles.append(Tile::getWallTile(tileSize));
+        wallWidth = patternSize - 1;
     }
 
     for(int iY = 0; iY < mapHeight; iY++){
@@ -162,16 +136,17 @@ QList<Tile> TilePatternThread::generateTiles(QImage baseImage, int tileSize){ //
                 newTiles[findIndex].incrementWeight();
                 idMap.append(newTiles.at(findIndex).id);
             }
-            if(iX == (mapWidth-1) && (bool)(wallPos & WallPos::RightWall)){ //if YWall
-                idMap.append(0); //id of WallTile
-            }
 
             if(this->isInterruptionRequested())
                 return newTiles;
         }
+        if((bool)(wallPos & WallPos::RightWall)){ //if YWall
+            for(int iX = 0; iX < wallWidth; iX++)
+                idMap.append(0); //id of WallTile
+        }
     }
     if((bool)(wallPos & WallPos::BottomWall)){
-        for(int iX = 0; iX <= mapWidth; iX++){
+        for(int iX = 0; iX <= (mapWidth + wallWidth) * wallWidth; iX++){
             idMap.append(0);
         }
     }
@@ -217,10 +192,11 @@ QList<Pattern> TilePatternThread::generatePatterns(QList<short> IDmap, int patte
     QList<Pattern> newPatterns{};
     int mapHeight = baseImage.height() / tileSize;
     int mapWidth = baseImage.width() / tileSize;
+    int wallWidth = 0;
 
-    if((bool)(wallPos & WallPos::BottomWall)) mapHeight++;
-    if((bool)(wallPos & WallPos::RightWall)) mapWidth++;
-
+    if(wallPos > WallPos::None) wallWidth = patternSize - 1;
+    if((bool)(wallPos & WallPos::BottomWall)) mapHeight+=wallWidth;
+    if((bool)(wallPos & WallPos::RightWall)) mapWidth+=wallWidth;
 
     auto getAdjacent = [&](int x, int y){ //wrapping implemented
         QList<short> adjacent{};

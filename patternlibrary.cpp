@@ -1,5 +1,26 @@
 #include "patternlibrary.h"
+#include "qdrag.h"
+#include "qevent.h"
+#include "qgraphicssceneevent.h"
+#include "qmimedata.h"
 #include "qtimer.h"
+
+void TileScene::mousePressEvent(QGraphicsSceneMouseEvent *event){
+    qDebug()<<"received mouse";
+    if (event->button() == Qt::LeftButton && children().size() > 0) {
+
+        QDrag *drag = new QDrag(this);
+        QMimeData *mimeData = new QMimeData;
+        auto patternLib = ((PatternLibrary*)this->parent());
+        const Tile &selectedTile = patternLib->tiles.at(patternLib->selectedTileId);
+
+        mimeData->setText(QString{"%1"}.arg(selectedTile.id));
+        drag->setMimeData(mimeData);
+        drag->setPixmap(selectedTile.pixmap);
+
+        Qt::DropAction dropAction = drag->exec();
+    }
+}
 
 PatternLibrary::PatternLibrary(QComboBox *patternSelector, QGraphicsView *patternView, QComboBox *tileSelector, QGraphicsView *tileView, QObject *parent)
     : QObject{parent}, patternSelector(patternSelector), patternView(patternView), tileSelector(tileSelector), tileView(tileView)
@@ -10,7 +31,7 @@ PatternLibrary::PatternLibrary(QComboBox *patternSelector, QGraphicsView *patter
     this->originalPatterns = QList<Pattern>{};
 
     patternView->setScene(new QGraphicsScene(this));
-    tileView->setScene(new QGraphicsScene(this));
+    tileView->setScene(new TileScene(this));
     connect(patternSelector, &QComboBox::activated, this, &PatternLibrary::showElementInfo);
     connect(tileSelector, &QComboBox::activated, this, &PatternLibrary::showElementInfo);
 

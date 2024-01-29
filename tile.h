@@ -11,10 +11,10 @@
 //Should seperate tile and pattern?
 
 enum class WallPos : int{ //is this the right place?
-    None = 0,
-    RightWall, //modulo gives 1, wall on the right
-    BottomWall, //greater than 1, wall on the bottom
-    BothWall
+    None = 0, //00
+    RightWall, //01
+    BottomWall, //10
+    BothWall //11
 };
 
 constexpr enum WallPos operator |( const enum WallPos selfValue, const enum WallPos inValue ){
@@ -84,7 +84,7 @@ protected:
 */
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* e) override;
 private:
-    QList<Tile> refTiles;
+    QVarLengthArray<Tile, 16> refTiles;
 };
 
 using CompatibilityList = QList<QList<QBitArray>>; //dy, dx, patternIDs?, can store 128 * 128 patterns

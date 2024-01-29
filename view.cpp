@@ -65,10 +65,16 @@ void GraphicsView::drawForeground(QPainter *painter, const QRectF &rect)
 }
 
 void GraphicsView::dropEvent(QDropEvent *event){
-    qDebug()<<"GV, Drop event received: "<<event->mimeData()<<","<<event->mimeData()->text();
+    qDebug()<<"GV, Drop event received: "<<event->mimeData()<<","<<event->mimeData()->text()<<" at "<<event->position();
     if(event->mimeData()->hasUrls() && event->mimeData()->urls().first().isLocalFile()){
         //qDebug()<<"has urls too! Should check for file though"<<event->mimeData()->urls().first().toLocalFile();
         emit sendFile(event->mimeData()->urls().first().toLocalFile());
+        event->accept();
+    }
+    else if(event->mimeData()->hasText()){
+        qDebug()<<"Tile received! Id"<<event->mimeData()->text();
+        emit sendTileId(event->mimeData()->text().toInt(), event->position());
+        event->accept(); //hope to propagate to children?
     }
     QWidget::dropEvent(event);
 }
@@ -95,8 +101,8 @@ View::View(QWidget *parent)
     graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
     graphicsView->setOptimizationFlags(QGraphicsView::DontSavePainterState | QGraphicsView::DontAdjustForAntialiasing);
     graphicsView->setCacheMode(QGraphicsView::CacheModeFlag::CacheBackground); //creates even bigger stripes
-    graphicsView->setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
-    //graphicsView->setViewportUpdateMode(QGraphicsView::FullViewportUpdate); //test. Seems pretty good for this, as there are a lot of small updates
+    //graphicsView->setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
+    graphicsView->setViewportUpdateMode(QGraphicsView::FullViewportUpdate); //test. Seems pretty good for this, as there are a lot of small updates
     graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     //graphicsView->setBackgroundBrush(QBrush(Qt::BrushStyle::Dense7Pattern));
 
@@ -117,7 +123,7 @@ View::View(QWidget *parent)
     zoomOutIcon->setIconSize(iconSize);
     zoomSlider = new QSlider;
     zoomSlider->setMinimum(0);
-    zoomSlider->setMaximum(500);
+    zoomSlider->setMaximum(750);
     zoomSlider->setValue(250);
     zoomSlider->setTickPosition(QSlider::TicksRight);
 

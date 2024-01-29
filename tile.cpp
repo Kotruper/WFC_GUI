@@ -16,7 +16,7 @@ TileGraphicsItem::TileGraphicsItem(const Tile& tile): refTiles{tile} //is this c
 {
 }
 
-TileGraphicsItem::TileGraphicsItem(const QList<Tile> &tiles): refTiles(tiles) //is this copying?
+TileGraphicsItem::TileGraphicsItem(const QList<Tile> &tiles): refTiles(tiles.begin(), tiles.end()) //is this copying?
 {
 }
 
@@ -141,12 +141,12 @@ bool Pattern::isCompatibleAt(const Pattern &otherPattern, const QPoint &pos){// 
     return true;
 }
 
-const bool Pattern::isWallPattern() const{ //ONLY IF WALLS ARE ENABLED. Maybe reserve 0 for walls?
+const bool Pattern::isWallPattern() const{ //ONLY WORKS IF WALLS ARE ENABLED. Maybe reserve 0 for walls?
     return this->tileIDs.at(0) == 0;
 }
 
-const bool Pattern::isCornerWallPattern() const{ //ONLY IF WALLS ARE ENABLED. BREAKS WITH PATTERN SIZE == 1 Maybe reserve 0 for walls?
-    return tileIDs.at(0) == 0 && tileIDs.at(1) == 0 && tileIDs.at(size) == 0;
+const bool Pattern::isCornerWallPattern() const{ //ONLY WORKS IF WALLS ARE ENABLED. BREAKS WITH PATTERN SIZE == 1 Maybe reserve 0 for walls?
+    return (tileIDs.at(0) == 0) && (tileIDs.at(1) == 0) && (tileIDs.at(size) == 0) && (tileIDs.at(size+1) != 0);
 }
 
 bool Pattern::operator==(QList<short> &other){

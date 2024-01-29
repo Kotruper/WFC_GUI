@@ -23,7 +23,7 @@ struct TileSlot{
     QBitArray patternIdBitset; //should be a list?
     QPoint pos;
     short collapsedId = -1;
-    bool isPermament = false;
+    short permamentTileId = -1;
 
     bool operator>(const TileSlot &other) const{ //a > b, when a has more options (entropy a > entropy b)
         return this->patternIdBitset.count(true) > other.patternIdBitset.count(true);

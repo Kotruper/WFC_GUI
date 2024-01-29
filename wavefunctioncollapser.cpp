@@ -5,7 +5,7 @@
 #include <QRandomGenerator>
 
 void TileSlotDisplayItem::dropEvent(QGraphicsSceneDragDropEvent* e){
-    qDebug()<<"Drop detected!";
+    qDebug()<<"Drop detected! by slot at"<<this->pos();
     if (e->mimeData()->hasImage()) {
         //auto wfc = (WaveFunctionCollapser*)this->parentWidget();
         e->accept();
@@ -34,49 +34,43 @@ WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *paren
     collapseCandidatePos = {};
     this->wfc_thread = nullptr;
     this->updateGridTimer = new QTimer(this);
-    updateGridTimer->setInterval(1000); //10/sec at first
+    updateGridTimer->setInterval(200); //10/sec at first
     connect(updateGridTimer, &QTimer::timeout, this, &WaveFunctionCollapser::updateGrid);
 }
 
 QBitArray WaveFunctionCollapser::getWallPatterns(const QList<Pattern> &patterns, const QList<Tile> &tiles, const WallPos &wallPos){
     QBitArray result{patterns.size()};
-    switch(wallPos){
-    case WallPos::None:
-        return result;
-    case WallPos::RightWall:
-    case WallPos::BottomWall:
-        for(const auto &p:patterns){
-            if(p.isWallPattern()) result.setBit(p.id);
-        }
-        return result;
-    case WallPos::BothWall:
-        for(const auto &p:patterns){
-            if(p.isCornerWallPattern()) result.setBit(p.id);
-        }
-        return result;
+    if(wallPos > WallPos::None){
+        for(const auto &p:patterns) if(p.isWallPattern()) result.setBit(p.id);
     }
+    return result;
 }
 
 QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){ //probably works, in observation though
     auto newGrid = QList<TileSlot>{};
     QBitArray allowedWallPatterns = getWallPatterns(patterns, tiles, wallPos) & allowedPatterns;
+    int wallWidth = 0;
 
-    if((bool)(wallPos & WallPos::RightWall))
-        width++;
-    if((bool)(wallPos & WallPos::BottomWall))
-        height++;
+    if(wallPos > WallPos::None) wallWidth = patterns.first().size - 1;
+    if((bool)(wallPos & WallPos::RightWall)) width += wallWidth;
+    if((bool)(wallPos & WallPos::BottomWall)) height += wallWidth;
 
     for(int y=0; y < height; y++){
         for(int x=0; x < width; x++){
-            newGrid.append(TileSlot{allowedPatterns & ~allowedWallPatterns, QPoint{x,y}});
-            if((y == height-1) && (wallPos == WallPos::BottomWall)) //if bottom tile allow only walls
+            newGrid.append(TileSlot{allowedPatterns & ~allowedWallPatterns, QPoint{x,y}}); //normal tile, bitset has allowed patterns that arent wall patterns
+            if(((x >= width  - wallWidth) && (bool)(wallPos & WallPos::RightWall))//if right tile allow only walls
+                || ((y >= height - wallWidth) && (bool)(wallPos & WallPos::BottomWall))){//or if bottom tile allow only walls
                 newGrid.back().patternIdBitset = allowedWallPatterns;
+                newGrid.back().permamentTileId = 0;
+                //collapseCandidatePos.append(newGrid.back().pos);
+            }
         }
-        if(wallPos == WallPos::RightWall) //if right tile allow only walls
-            newGrid.back().patternIdBitset = allowedWallPatterns;
     }
-    if(wallPos > WallPos::None){
-        newGrid.back().patternIdBitset = allowedWallPatterns; //if corner, only allow wall tiles
+    if(wallPos == WallPos::BothWall){
+        QBitArray cornerPattern = QBitArray(allowedWallPatterns.size());
+        for(const auto &p:patterns) if(p.isCornerWallPattern()) cornerPattern.setBit(p.id);
+        newGrid.back().patternIdBitset = cornerPattern; //if corner, only allow corner wall tiles
+        newGrid.back().permamentTileId = 0;
     }
     return newGrid;
 }
@@ -94,8 +88,11 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
         if(ts.collapsedId >= 0){
             const short &tileId = patterns.at(ts.collapsedId).tileIDs.first();
 
-            if((tileId == 0) && skipWall) continue; //skip rendering wall tiles
+            //if((tileId == 0) && skipWall) continue; //skip rendering wall tiles
             item = (TileSlotDisplayItem*) new TileGraphicsItem(tiles.at(tileId));
+            auto innerText = new QGraphicsSimpleTextItem(QString("%1").arg(ts.collapsedId), item);
+            innerText->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
+            innerText->setScale(0.01);
         }
         else if(ts.collapsedId == -1){ //Display uncollapsed tile, change to blended tiles
             /*
@@ -107,15 +104,18 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
             */
 
             QString text;
-            if(ts.patternIdBitset.count(false) >= 0){ //PERF test, changed from ==
+            if(ts.patternIdBitset.count(true) >= 36){ //PERF test, changed from ==
                 text = "Uncollapsed";
             }
             else{
+                int amnt = 0;
                 for(int i = 0; i < ts.patternIdBitset.size(); i++){
-                    if(ts.patternIdBitset.testBit(i))
+                    if(ts.patternIdBitset.testBit(i)){
                         text.append(std::to_string(i).append(","));
+                        amnt++;
+                        if((amnt%6) == 0) text.append('\n');
+                    }
                     //text.append((ts.patternIdBitset.testBit(i)) ? '1' : '0');
-                    //if((i%16) == 15) text.append('\n');
                 }
             }
             auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
@@ -132,7 +132,7 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
             item =(TileSlotDisplayItem*) rectItem;
         }
         item->setPos(ts.pos * tileSize);
-        //item->setAcceptDrops(true); //EDIT, doesn't seem to work
+        item->setAcceptDrops(true); //EDIT, maybe?
         gridDisplay->addToGroup(item);
         //qDebug()<<tiles[ts.collapsedId].id;
     }
@@ -158,11 +158,9 @@ QBitArray WaveFunctionCollapser::getAllowedPatterns(const QList<Pattern> &patter
             if(p.tileIDs.contains(id)) enabledPatterns.setBit(p.id, false);
         }
     }
-/*
-    if(wallPos > WallPos::None){
-        enabledPatterns &= ~getWallPatterns(patterns,tiles,wallPos);
-    }
-*/
+
+    //if(wallPos > WallPos::None) enabledPatterns &= ~getWallPatterns(patterns,tiles,wallPos);//if walls are enabled, remove wall patterns from regular tiles
+    //problem: loses dissalowed wall pattern info
     return enabledPatterns;
 }
 
@@ -206,12 +204,16 @@ void WaveFunctionCollapser::generate(int iters){
     }
 
     if(iters == 0){ //for 0 generate remaining grid
-        for(const auto &ts:grid)
-            if(ts.collapsedId == -1) iters++;
-        //clearGrid();
+        for(const auto &ts:grid) if(ts.collapsedId == -1) iters++;
+        if(iters == 0){ //if none remain, generate new grid
+            clearGrid();
+            for(const auto &ts:grid) if(ts.collapsedId == -1) iters++;
+        }
     }
-    int collapserGridHeight = ((bool)(wallPos & WallPos::BottomWall)) ? (gridHeight+1) : (gridHeight);
-    int collapserGridWidth = ((bool)(wallPos & WallPos::RightWall)) ? (gridWidth+1) : (gridWidth);
+    qDebug()<<"Generation started. Iters: "<<iters;
+    const int wallWidth = (wallPos == WallPos::None) ? (0) : (patterns.first().size - 1);
+    const int collapserGridHeight = ((bool)(wallPos & WallPos::BottomWall)) ? (gridHeight + wallWidth) : (gridHeight);
+    const int collapserGridWidth = ((bool)(wallPos & WallPos::RightWall)) ? (gridWidth + wallWidth) : (gridWidth);
 
     auto activeCollapserThread = new WaveFunctionThread(grid, patterns, collapserGridWidth, collapserGridHeight, iters, collapseCandidatePos, seed, wallPos, this); //currently not deleted?
     this->wfc_thread = activeCollapserThread;
@@ -309,7 +311,7 @@ void WaveFunctionThread::collapseSlot(const QPoint &toCollapse, const QList<Patt
     }
     short patternId = possibleIds[weightedRandom(weightLimits, this->seed)]; //TODO: will need to update, maybe
     slot.collapsedId = patternId;
-    slot.patternIdBitset = QBitArray(slot.patternIdBitset.size());
+    slot.patternIdBitset.fill(false);
     slot.patternIdBitset.setBit(patternId);
 }
 
@@ -362,9 +364,9 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
                     //this can result in it finding a better collapse that doesnt give uncollapsable results, maybe
                     qDebug()<<"unsolvable at pos: "<<currentSlot.pos;
                     //currentSlot.collapsedId = -2;
-                    //updatedSlots.pop_front();
+                    updatedSlots.pop_front();
                     //currentSlot.patternIdBitset = newBitset;
-                    return {}; //could also return the current updated, food for thought, or empty list
+                    return updatedSlots; //could also return the current updated, food for thought, or empty list
                 }
 
                 if(currentSlot.patternIdBitset != newBitset){
@@ -375,8 +377,6 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
                 if(this->isInterruptionRequested())
                     return {}; //TODO
                 }
-            //emit sendGrid(grid);
-            //this->msleep(100);
             }
         currSlotIndex++;
         }

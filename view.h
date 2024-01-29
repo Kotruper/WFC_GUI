@@ -28,6 +28,7 @@ public:
 
 signals:
     void sendFile(QString filename);
+    void sendTileId(int id, QPointF pos);
 
 protected:
 #if QT_CONFIG(wheelevent)

@@ -6,6 +6,18 @@
 #include "qgraphicsview.h"
 #include "tile.h"
 
+class TileScene : public QGraphicsScene
+{
+    Q_OBJECT
+public:
+    TileScene(QObject* parent = nullptr) : QGraphicsScene(parent){
+        //set cursor shape
+    }
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+
+};
+
 class PatternLibrary : public QObject
 {
     Q_OBJECT
