@@ -57,9 +57,9 @@ QBitArray WaveFunctionCollapser::getWallPatterns(const QList<Pattern> &patterns,
     }
 }
 
-QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){
+QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){ //probably works, in observation though
     auto newGrid = QList<TileSlot>{};
-    QBitArray wallPatterns = getWallPatterns(patterns, tiles, wallPos);
+    QBitArray allowedWallPatterns = getWallPatterns(patterns, tiles, wallPos) & allowedPatterns;
 
     if((bool)(wallPos & WallPos::RightWall))
         width++;
@@ -68,15 +68,15 @@ QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){
 
     for(int y=0; y < height; y++){
         for(int x=0; x < width; x++){
-            newGrid.append(TileSlot{allowedPatterns, QPoint{x,y}});
+            newGrid.append(TileSlot{allowedPatterns & ~allowedWallPatterns, QPoint{x,y}});
             if((y == height-1) && (wallPos == WallPos::BottomWall)) //if bottom tile allow only walls
-                newGrid.back().patternIdBitset = wallPatterns;
+                newGrid.back().patternIdBitset = allowedWallPatterns;
         }
         if(wallPos == WallPos::RightWall) //if right tile allow only walls
-            newGrid.back().patternIdBitset = wallPatterns;
+            newGrid.back().patternIdBitset = allowedWallPatterns;
     }
     if(wallPos > WallPos::None){
-        newGrid.back().patternIdBitset = wallPatterns; //if corner, only allow wall tiles
+        newGrid.back().patternIdBitset = allowedWallPatterns; //if corner, only allow wall tiles
     }
     return newGrid;
 }
@@ -158,9 +158,11 @@ QBitArray WaveFunctionCollapser::getAllowedPatterns(const QList<Pattern> &patter
             if(p.tileIDs.contains(id)) enabledPatterns.setBit(p.id, false);
         }
     }
+/*
     if(wallPos > WallPos::None){
         enabledPatterns &= ~getWallPatterns(patterns,tiles,wallPos);
     }
+*/
     return enabledPatterns;
 }
 

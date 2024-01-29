@@ -27,8 +27,10 @@ TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     : QObject{parent}, creatorView(view){
     setTileSize(1);
     setPatternSize(3);
-    //creatorView->setAcceptDrops(true);
-    //creatorView->view()->setAcceptDrops(true);
+
+    creatorView->setAcceptDrops(true);
+    creatorView->view()->setAcceptDrops(true);
+    connect((GraphicsView*)creatorView->view(), &GraphicsView::sendFile, this, &TilePatternCreator::setImage);
 }
 /*
 TilePatternThread::TilePatternThread(QImage baseImage, int tilePixelSize, int patternSize, bool wallX, bool wallY, bool repeatX, bool repeatY, QObject *parent)
@@ -80,6 +82,7 @@ void TilePatternCreator::updatePatterns(QList<Pattern> newPatterns){
 }
 
 void TilePatternCreator::setImage(QString filename){ //will need some changes for the wall, maybe here or in tiledRead?
+    //qDebug()<<"TPC file get, "<<filename;
     auto currentScene = creatorView->view()->scene();
     currentScene->clear();
     this->baseImage.load(filename);

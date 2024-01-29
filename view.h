@@ -19,18 +19,25 @@ class GraphicsView : public QGraphicsView
 {
     Q_OBJECT
 public:
-    GraphicsView(View *v) : QGraphicsView(), view(v) { }
+    GraphicsView(View *v) : QGraphicsView(), view(v) {}
     int patternSize = -1;
     int tileSize = -1;
 
     void setTileSize(int size);
     void setPatternSize(int size);
 
+signals:
+    void sendFile(QString filename);
+
 protected:
 #if QT_CONFIG(wheelevent)
     void wheelEvent(QWheelEvent *) override;
 #endif
     void drawForeground(QPainter *painter, const QRectF &rect) override;
+
+    void dropEvent(QDropEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
 
 private:
     View *view;
@@ -65,6 +72,12 @@ private:
     QToolButton *resetButton;
     QSlider *zoomSlider;
     //QSlider *rotateSlider;
+
+protected:
+    //void dropEvent(QDropEvent *event) override;
+    //void dragMoveEvent(QDragMoveEvent *event) override;
+    //void dragEnterEvent(QDragEnterEvent *event) override;
+
 };
 
 #endif // VIEW_H

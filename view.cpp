@@ -64,6 +64,26 @@ void GraphicsView::drawForeground(QPainter *painter, const QRectF &rect)
     painter->drawLines(patternLines.data(), patternLines.size());
 }
 
+void GraphicsView::dropEvent(QDropEvent *event){
+    qDebug()<<"GV, Drop event received: "<<event->mimeData()<<","<<event->mimeData()->text();
+    if(event->mimeData()->hasUrls() && event->mimeData()->urls().first().isLocalFile()){
+        //qDebug()<<"has urls too! Should check for file though"<<event->mimeData()->urls().first().toLocalFile();
+        emit sendFile(event->mimeData()->urls().first().toLocalFile());
+    }
+    QWidget::dropEvent(event);
+}
+
+void GraphicsView::dragMoveEvent(QDragMoveEvent *event){
+    //qDebug()<<"GV, move event";
+    QWidget::dragMoveEvent(event);
+}
+
+void GraphicsView::dragEnterEvent(QDragEnterEvent *event){
+    //qDebug()<<"GV, Drag Enter event received";
+    event->accept();
+    QWidget::dragEnterEvent(event);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 View::View(QWidget *parent)
@@ -97,8 +117,8 @@ View::View(QWidget *parent)
     zoomOutIcon->setIconSize(iconSize);
     zoomSlider = new QSlider;
     zoomSlider->setMinimum(0);
-    zoomSlider->setMaximum(1000);
-    zoomSlider->setValue(500);
+    zoomSlider->setMaximum(500);
+    zoomSlider->setValue(250);
     zoomSlider->setTickPosition(QSlider::TicksRight);
 
     // Zoom slider layout
@@ -125,6 +145,8 @@ View::View(QWidget *parent)
     connect(zoomOutIcon, &QAbstractButton::clicked, this, &View::zoomOut);
 
     setupMatrix();
+    //this->setAcceptDrops(true);
+    //graphicsView->setAcceptDrops(true);
 }
 
 QGraphicsView *View::view() const
@@ -192,3 +214,21 @@ void View::zoomOutBy(int level)
 {
     zoomSlider->setValue(zoomSlider->value() - level);
 }
+/*
+void View::dropEvent(QDropEvent *event){
+    qDebug()<<"V, Drop event received"<<event->mimeData();
+    QWidget::dropEvent(event);
+}
+
+void View::dragMoveEvent(QDragMoveEvent *event){
+    return;
+    qDebug()<<"Drag Move event received";
+    QWidget::dragMoveEvent(event);
+}
+
+void View::dragEnterEvent(QDragEnterEvent *event){
+    qDebug()<<"V, Drag Enter event received";
+    event->accept();
+    QWidget::dragEnterEvent(event);
+}
+*/
