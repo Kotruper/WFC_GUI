@@ -70,8 +70,8 @@ class Pattern;
 class TileGraphicsItem : public QGraphicsItem
 {
 public:
-    TileGraphicsItem(const Tile &tile);
-    TileGraphicsItem(const QList<Tile> &tiles);
+    TileGraphicsItem(const Tile &refTile, double opacity = 1.0);
+    //TileGraphicsItem(const QList<Tile> &tiles);
 
     QRectF boundingRect() const override;
     QPainterPath shape() const override;
@@ -84,7 +84,8 @@ protected:
 */
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* e) override;
 private:
-    QVarLengthArray<Tile, 16> refTiles;
+    const Tile &refTile;
+    double opacity;
 };
 
 using CompatibilityList = QList<QList<QBitArray>>; //dy, dx, patternIDs?, can store 128 * 128 patterns

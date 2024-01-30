@@ -15,7 +15,7 @@ void TilePatternCreator::updateTiles(QList<Tile> newTiles){
     //qDebug("got into creating");
     this->tiles = newTiles;
 
-    auto displayTiles = [&](QList<Tile> tiles, int yOffset){
+    auto displayTiles = [&](const QList<Tile> &tiles, int yOffset){
         for (int i = 0; i < tiles.size(); ++i) { //Display the tiles
             QGraphicsItem *item = new TileGraphicsItem(tiles.at(i));
             item->setPos(QPointF(i*(tileSize+1), yOffset));
@@ -36,7 +36,7 @@ void TilePatternCreator::updatePatterns(QList<Pattern> newPatterns){
     this->patterns = newPatterns;
     //qDebug("got to patterns");
 
-    auto displayPatterns = [&](QList<Pattern> patterns, int yOffset){
+    auto displayPatterns = [&](const QList<Pattern> &patterns, int yOffset){
         for (int i = 0; i < patterns.size(); ++i) { //Display the tiles
             QGraphicsItem *item = new PatternGraphicsItem(patterns[i],tiles);
             item->setPos(QPointF((i%20)*(patternSize*tileSize + tileSize), yOffset + (i/20)*(patternSize*tileSize + tileSize)));

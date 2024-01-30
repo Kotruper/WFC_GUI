@@ -34,7 +34,7 @@ WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *paren
     collapseCandidatePos = {};
     this->wfc_thread = nullptr;
     this->updateGridTimer = new QTimer(this);
-    updateGridTimer->setInterval(200); //10/sec at first
+    updateGridTimer->setInterval(500); //10/sec at first
     connect(updateGridTimer, &QTimer::timeout, this, &WaveFunctionCollapser::updateGrid);
 }
 
@@ -80,50 +80,72 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
     scene->clear(); //Needed?
     int tileSize = tiles.first().size;
     bool skipWall = tiles.first().isWall;
+    bool includeText = false;
 
     QGraphicsItemGroup* gridDisplay = new QGraphicsItemGroup(); //not much effect, maybe faster
 
-    for (const auto &ts: grid) { //Display the tiles
-        TileSlotDisplayItem *item;
-        if(ts.collapsedId >= 0){
-            const short &tileId = patterns.at(ts.collapsedId).tileIDs.first();
+    auto getCollapsedItem = [&](const TileSlot &ts){
+        const short &tileId = patterns.at(ts.collapsedId).tileIDs.first();
 
-            //if((tileId == 0) && skipWall) continue; //skip rendering wall tiles
-            item = (TileSlotDisplayItem*) new TileGraphicsItem(tiles.at(tileId));
+        if((tileId == 0) && skipWall) return (TileSlotDisplayItem*) nullptr; //skip rendering wall tiles
+        TileSlotDisplayItem* item = (TileSlotDisplayItem*) new TileGraphicsItem(tiles.at(tileId));
+        if(includeText){
             auto innerText = new QGraphicsSimpleTextItem(QString("%1").arg(ts.collapsedId), item);
             innerText->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
             innerText->setScale(0.01);
         }
-        else if(ts.collapsedId == -1){ //Display uncollapsed tile, change to blended tiles
-            /*
-            QList<Tile> slotTiles = {};
-            for(int i = 0; i<ts.patternIdBitset.size(); i++)
-                if(ts.patternIdBitset.testBit(i)) slotTiles.append(tiles.at(patterns.at(i).tileIDs.first())); //NOPE! extremely slow. but fun
+        return item;
+    };
 
-            item = new TileGraphicsItem(slotTiles);
-            */
-
-            QString text;
-            if(ts.patternIdBitset.count(true) >= 36){ //PERF test, changed from ==
-                text = "Uncollapsed";
-            }
-            else{
-                int amnt = 0;
-                for(int i = 0; i < ts.patternIdBitset.size(); i++){
-                    if(ts.patternIdBitset.testBit(i)){
-                        text.append(std::to_string(i).append(","));
-                        amnt++;
-                        if((amnt%6) == 0) text.append('\n');
-                    }
-                    //text.append((ts.patternIdBitset.testBit(i)) ? '1' : '0');
+    auto getUncollapsedTextItem = [&](const TileSlot &ts){
+        QString text;
+        if(ts.patternIdBitset.count(true) >= 36){ //PERF test, changed from ==
+            text = "Uncollapsed";
+        }
+        else{
+            int amnt = 0;
+            for(int i = 0; i < ts.patternIdBitset.size(); i++){
+                if(ts.patternIdBitset.testBit(i)){
+                    text.append(std::to_string(i).append(","));
+                    amnt++;
+                    if((amnt%6) == 0) text.append('\n');
                 }
+                //text.append((ts.patternIdBitset.testBit(i)) ? '1' : '0');
             }
-            auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
-            rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
-            auto innerText = new QGraphicsSimpleTextItem(text, rectItem);
-            innerText->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
-            innerText->setScale(0.01);
-            item =(TileSlotDisplayItem*) rectItem;
+        }
+        auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
+        rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
+        auto innerText = new QGraphicsSimpleTextItem(text, rectItem);
+        innerText->setBrush(QBrush(Qt::BrushStyle::SolidPattern));
+        innerText->setScale(0.01);
+        return (TileSlotDisplayItem*) rectItem;
+    };
+
+    auto getUncollapsedBlendedItem = [&](const TileSlot &ts){
+        QVarLengthArray<int> tileAmounts(static_cast<int>(tiles.size()),0);
+        if(ts.patternIdBitset.count(true) <= -1){ //change to return blended tile
+            //text = "Uncollapsed";
+        }
+        const auto item = new QGraphicsItemGroup();
+        for(int i = 0; i<ts.patternIdBitset.size(); i++){
+            if(ts.patternIdBitset.testBit(i)) tileAmounts[patterns.at(i).tileIDs.first()]++;
+        }
+        const int totalItems = ts.patternIdBitset.count(true);
+        for(int tileID = (tiles.first().isWall) ? (1) : (0); tileID < tileAmounts.size(); tileID++){
+            if(tileAmounts.at(tileID) > 0)
+                item->addToGroup(new TileGraphicsItem(tiles.at(tileID), tileAmounts.at(tileID) / (totalItems * 1.0)));
+        }
+        return (TileSlotDisplayItem*) item;
+    };
+
+    for (const auto &ts: grid) { //Display the tiles
+        TileSlotDisplayItem *item;
+        if(ts.collapsedId >= 0){
+            item = getCollapsedItem(ts);
+        }
+        else if(ts.collapsedId == -1){ //Display uncollapsed tile, change to blended tiles
+            //item = getUncollapsedTextItem(ts);
+            item = getUncollapsedBlendedItem(ts);
         }
         else if(ts.collapsedId == -2){ //Display uncollapsible tile
             auto rectItem = new QGraphicsRectItem(QRect(0,0,tileSize,tileSize));
@@ -131,6 +153,7 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
             rectItem->setPen(QPen(QBrush(Qt::BrushStyle::SolidPattern),0));
             item =(TileSlotDisplayItem*) rectItem;
         }
+        if(item == nullptr) continue;
         item->setPos(ts.pos * tileSize);
         item->setAcceptDrops(true); //EDIT, maybe?
         gridDisplay->addToGroup(item);

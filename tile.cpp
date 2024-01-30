@@ -12,36 +12,36 @@ LibraryElement::LibraryElement(int id, int size, qreal weight): id(id), weight(w
 {
 }
 
-TileGraphicsItem::TileGraphicsItem(const Tile& tile): refTiles{tile} //is this copying?
-{
-}
-
-TileGraphicsItem::TileGraphicsItem(const QList<Tile> &tiles): refTiles(tiles.begin(), tiles.end()) //is this copying?
+TileGraphicsItem::TileGraphicsItem(const Tile &refTile, double opacity): refTile(refTile), opacity(opacity) //is this copying?
 {
 }
 
 QRectF TileGraphicsItem::boundingRect() const
 {
-    return this->refTiles.first().pixmap.rect();
+    return this->refTile.pixmap.rect();
 }
 
 QPainterPath TileGraphicsItem::shape() const
 {
     QPainterPath path;
-    path.addRect(this->refTiles.first().pixmap.rect());
+    path.addRect(this->refTile.pixmap.rect());
     return path;
 }
 
 void TileGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
+    if(opacity < 1.0) painter->setOpacity(opacity);
+    painter->drawPixmap(this->boundingRect().toRect(), this->refTile.pixmap);
+    /*
     if(refTiles.size() <= 1)
-        painter->drawPixmap(this->boundingRect().toRect(), this->refTiles.first().pixmap);
+
     else{
-        painter->setOpacity(1.0/refTiles.size());
+
         for(const auto &t:refTiles)
             painter->drawPixmap(this->boundingRect().toRect(), t.pixmap); //is there a pixmap blend?
         }
+    */
 }
 void TileGraphicsItem::dragEnterEvent(QGraphicsSceneDragDropEvent* e){
     qDebug()<<"test tgi drageEnter event";
