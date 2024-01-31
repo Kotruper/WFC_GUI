@@ -75,6 +75,8 @@ public slots:
     void exportImage(QString filename);
     void setUIEnabled(bool enabled);
     void cancelGenerate();
+    void handleThreadEnd();
+    void receiveDroppedTile(const int id, const QPointF pos);
 
 signals:
     void setEnabledButtons(bool enabled);
@@ -85,6 +87,7 @@ signals:
 class WaveFunctionThread : public QThread
 {
     Q_OBJECT
+    class unsolvableException : std::exception {};
 public:
     explicit WaveFunctionThread(const QList<TileSlot> &starterGrid,
                                 const QList<Pattern> &patterns,
@@ -101,11 +104,12 @@ private:
     int gridHeight;
     int iters;
     int seed;
-    int attemptLimit = 5; //test
+    int attemptLimit = 10; //test
     QList<TileSlot> starterGrid;
     QList<TileSlot> grid;
     QList<Pattern> patterns;
     QList<QPoint> collapseCandidatePos;
+    QList<QPoint> startingCandidatePos;
     WallPos wallPos;
     QMutex mutex;
 

@@ -59,13 +59,9 @@ public:
     bool operator== (Tile &tile);
     bool operator== (QImage &image);
     bool operator== (const QImage &image) const;
-    static void displayTiles(QList<Tile> tiles, int x, int y);
     static const Tile getWallTile(int size);
     static void setWallTile(Tile wallTile);
-
 };
-
-class Pattern;
 
 class TileGraphicsItem : public QGraphicsItem
 {
@@ -88,11 +84,11 @@ private:
     double opacity;
 };
 
-using CompatibilityList = QList<QList<QBitArray>>; //dy, dx, patternIDs?, can store 128 * 128 patterns
+
 
 class Pattern : public LibraryElement
 {
-
+using CompatibilityList = QList<QList<QBitArray>>; //dy, dx, patternIDs?, can store 128 * 128 patterns
 public:
     Pattern(int id, QList<short> tileIDs, int size, int weight = 1);
 

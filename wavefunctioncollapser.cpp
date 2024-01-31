@@ -29,13 +29,14 @@ void TileSlotDisplayItem::dragMoveEvent(QGraphicsSceneDragDropEvent* e){
 WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *parent)
     : QObject{parent}, generatorView(generatorView)
 {
-    gridHeight = 10;
-    gridWidth = 10;
+    gridHeight = 30;
+    gridWidth = 30;
     collapseCandidatePos = {};
     this->wfc_thread = nullptr;
     this->updateGridTimer = new QTimer(this);
     updateGridTimer->setInterval(500); //10/sec at first
     connect(updateGridTimer, &QTimer::timeout, this, &WaveFunctionCollapser::updateGrid);
+    connect((GraphicsView*)generatorView->view(), &GraphicsView::sendTileId, this, &WaveFunctionCollapser::receiveDroppedTile);
 }
 
 QBitArray WaveFunctionCollapser::getWallPatterns(const QList<Pattern> &patterns, const QList<Tile> &tiles, const WallPos &wallPos){
@@ -197,7 +198,7 @@ void WaveFunctionCollapser::setPatterns(QList<Tile> newTiles, QList<Pattern> new
     qDebug()<<"Received tiles ("<<newTiles.size()<<") and patterns("<<newPatterns.size()<<")";
 }
 
-void WaveFunctionCollapser::changeGridHeight(int val){
+void WaveFunctionCollapser::changeGridHeight(int val){ //should take into consideration changes during generation, such as height, width and different tiles and patterns
     if(val > 0)
         this->gridHeight = val;
     clearGrid();
@@ -244,10 +245,8 @@ void WaveFunctionCollapser::generate(int iters){
     connect(activeCollapserThread, &WaveFunctionThread::sendGrid, this, &WaveFunctionCollapser::updateGrid);
     //connect(activeCollapserThread, &WaveFunctionThread::sendPatterns, this, &TilePatternCreator::updatePatterns);
     connect(activeCollapserThread, &WaveFunctionThread::finishedSuccessfully, this, &WaveFunctionCollapser::saveCandidates);
+    connect(activeCollapserThread, &WaveFunctionThread::finished, this, &WaveFunctionCollapser::handleThreadEnd);
     connect(activeCollapserThread, &WaveFunctionThread::finished, activeCollapserThread, &WaveFunctionThread::deleteLater);
-    connect(activeCollapserThread, &WaveFunctionThread::finished, this, [&](){this->wfc_thread = nullptr;});
-    connect(activeCollapserThread, &WaveFunctionThread::finished, this, [&](){this->setEnabledButtons(true);});
-    connect(activeCollapserThread, &WaveFunctionThread::finished, updateGridTimer, &QTimer::stop);
 
     activeCollapserThread->start();
     updateGridTimer->start();
@@ -262,7 +261,27 @@ void WaveFunctionCollapser::cancelGenerate(){
         wfc_thread->requestInterruption();
     }
 }
+void WaveFunctionCollapser::handleThreadEnd(){
+    this->wfc_thread = nullptr;
+    this->setEnabledButtons(true);
+    updateGridTimer->stop();
+}
+void WaveFunctionCollapser::receiveDroppedTile(int id, const QPointF pos){//abomination
+    QPointF scenePos = generatorView->view()->mapToScene(pos.toPoint());
+    qDebug()<<"Received tile "<<id<<" at scene pos "<<scenePos;
+    if(generatorView->view()->sceneRect().contains(scenePos)){ //maybe also check if pos already has an id?
+        QPoint tilePos = ((scenePos / tiles.first().size) - QPointF(0.5,0.5)).toPoint(); //abomination 2
+        TileSlot &tileRef = grid[tilePos.x() + tilePos.y() * (gridWidth + ((bool)(wallPos & WallPos::RightWall) ? (patterns.first().size-1):(0)))];//abomination 3
+        QBitArray tilePatterns(patterns.size(),true);
+        if(id > -1) //if not resetting
+            for(int i = 0; i<tilePatterns.size(); i++)
+                if(patterns[i].tileIDs.first() != id) tilePatterns.clearBit(i);
 
+        tileRef.permamentTileId = id;
+        tileRef.patternIdBitset = tilePatterns & allowedPatterns & ~getWallPatterns(patterns,tiles,wallPos);
+        displayGrid(grid,tiles,gridWidth,gridHeight);
+    }
+}
 void WaveFunctionCollapser::updateGrid(){ //probably will need major optimisations
     this->grid = wfc_thread->requestGrid();
     //auto& borrowedGrid = wfc_thread->requestGrid();
@@ -348,8 +367,6 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
     int patternSize = patterns.first().size;
     QList<QPoint> updatedSlots = {collapsed}; //maybe set?
 
-    auto isUnsolvable = [](const TileSlot &t){return *t.patternIdBitset.bits() == 0;};
-
     auto ifNotContainedAppend = [&updatedSlots](const QPoint &updatedPos){
         if(updatedSlots.contains(updatedPos))
             return;
@@ -360,11 +377,10 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
     while(currSlotIndex < updatedSlots.size()){
         //qDebug()<<"propagation: updatedSlotAmount:"<<updatedSlots.size();
         const TileSlot &updatedSlot = getSlotRefAt(updatedSlots.at(currSlotIndex));
-
+        currSlotIndex++;
         if(updatedSlot.collapsedId == -2) continue; //dont propagate uncollapsables, TEST. maybe works? strange
 
         QVarLengthArray<Pattern> possiblePatterns = {}; //possible patterns for the tileslot
-
         for(int i=0; i<updatedSlot.patternIdBitset.size(); i++){
             if(updatedSlot.patternIdBitset.testBit(i))
                 possiblePatterns.append(patterns.at(i));
@@ -383,27 +399,22 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
 
                 QBitArray newBitset = currentSlot.patternIdBitset & possiblePatternsSet;
 
-                if(newBitset.count(true) == 0){ //ok, this is kinda weird. when it finds a possible uncollapsable slot, it just skips the whole propagation phase
-                    //this can result in it finding a better collapse that doesnt give uncollapsable results, maybe
+                if(this->isInterruptionRequested()) return {}; //TODO
+
+                if(newBitset.count(true) == 0){// if uncollapsable found
                     qDebug()<<"unsolvable at pos: "<<currentSlot.pos;
-                    //currentSlot.collapsedId = -2;
-                    updatedSlots.pop_front();
-                    //currentSlot.patternIdBitset = newBitset;
-                    return updatedSlots; //could also return the current updated, food for thought, or empty list
+                    currentSlot.collapsedId = -2;
+                    currentSlot.patternIdBitset = newBitset;
+                    throw unsolvableException(); //throw error, try again
                 }
 
                 if(currentSlot.patternIdBitset != newBitset){
                     currentSlot.patternIdBitset = newBitset;
                     ifNotContainedAppend(currentSlot.pos);
                 }
-
-                if(this->isInterruptionRequested())
-                    return {}; //TODO
-                }
             }
-        currSlotIndex++;
         }
-
+    }
     updatedSlots.pop_front(); //remove the collapsed TileSlot. Necessary. May need to keep track of updated slots somehow
 
     return updatedSlots; //test this whole thing
@@ -453,16 +464,27 @@ const QList<TileSlot>& WaveFunctionThread::requestGrid(){
 }
 
 void WaveFunctionThread::run(){
-    //this->grid = this->starterGrid;
-    try{
-        for(int i = 0; i < this->iters; i++){
-            generateGridStep();
-            if(this->isInterruptionRequested()) break;
+    this->starterGrid = this->grid;
+    this->startingCandidatePos = this->collapseCandidatePos;
+    int remainingAttempts = this->attemptLimit;
+    while(remainingAttempts > 0){
+        try{
+            for(int i = 0; i < this->iters; i++){
+                generateGridStep();
+                if(this->isInterruptionRequested()) return;
+            }
+            if(!this->isInterruptionRequested()){//or if generation failed/gave unsolvable
+                emit finishedSuccessfully(this->collapseCandidatePos);
+                return;
+            }
         }
-        if(!this->isInterruptionRequested()) //or if generation failed/gave unsolvable
-            emit finishedSuccessfully(this->collapseCandidatePos);
+        catch(const unsolvableException &e){ //a mess
+            qDebug()<<"Unsolvable pos found, attempting again. Remaining attempts: "<<remainingAttempts;
+            remainingAttempts--;
+            this->grid = starterGrid;
+            this->collapseCandidatePos = startingCandidatePos;
+            continue;
         }
-    catch(std::exception e){
-        qDebug()<<&e;
+        return;
     }
 }

@@ -89,6 +89,11 @@ void GraphicsView::dragEnterEvent(QDragEnterEvent *event){
     event->accept();
     QWidget::dragEnterEvent(event);
 }
+void GraphicsView::mouseReleaseEvent(QMouseEvent *event){
+    if(event->button() == Qt::RightButton){
+        emit sendTileId(-1,event->pos());
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -124,7 +129,7 @@ View::View(QWidget *parent)
     zoomSlider = new QSlider;
     zoomSlider->setMinimum(0);
     zoomSlider->setMaximum(750);
-    zoomSlider->setValue(250);
+    zoomSlider->setValue(375);
     zoomSlider->setTickPosition(QSlider::TicksRight);
 
     // Zoom slider layout
@@ -163,7 +168,7 @@ QGraphicsView *View::view() const
 
 void View::resetView()
 {
-    zoomSlider->setValue(250);
+    zoomSlider->setValue(375);
     //rotateSlider->setValue(0);
     setupMatrix();
     graphicsView->ensureVisible(QRectF(0, 0, 0, 0));

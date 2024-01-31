@@ -530,7 +530,7 @@
              <number>200</number>
             </property>
             <property name="value">
-             <number>10</number>
+             <number>30</number>
             </property>
            </widget>
           </item>
@@ -562,7 +562,7 @@
              <number>200</number>
             </property>
             <property name="value">
-             <number>10</number>
+             <number>30</number>
             </property>
             <property name="displayIntegerBase">
              <number>10</number>
@@ -673,6 +673,21 @@
          </spacer>
         </item>
         <item>
+         <widget class="QLabel" name="label_8">
+          <property name="styleSheet">
+           <string notr="true">font: 9pt &quot;Segoe UI&quot;;
+color: rgb(70, 70, 70);</string>
+          </property>
+          <property name="text">
+           <string>Hint: Right click on a tile to
+ clear permanent tiles</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="saveImageButton">
           <property name="text">
            <string>Save Image</string>
@@ -754,7 +769,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -843,7 +858,7 @@
              <x>10</x>
              <y>70</y>
              <width>181</width>
-             <height>101</height>
+             <height>71</height>
             </rect>
            </property>
            <layout class="QFormLayout" name="formLayout_2">
@@ -920,7 +935,7 @@
            <property name="geometry">
             <rect>
              <x>10</x>
-             <y>210</y>
+             <y>190</y>
              <width>181</width>
              <height>24</height>
             </rect>
@@ -933,7 +948,7 @@
            <property name="geometry">
             <rect>
              <x>10</x>
-             <y>240</y>
+             <y>220</y>
              <width>181</width>
              <height>24</height>
             </rect>
@@ -1013,7 +1028,7 @@
              <x>10</x>
              <y>70</y>
              <width>181</width>
-             <height>101</height>
+             <height>71</height>
             </rect>
            </property>
            <layout class="QFormLayout" name="formLayout_3">
@@ -1090,7 +1105,7 @@
            <property name="geometry">
             <rect>
              <x>10</x>
-             <y>210</y>
+             <y>190</y>
              <width>181</width>
              <height>24</height>
             </rect>
@@ -1103,7 +1118,7 @@
            <property name="geometry">
             <rect>
              <x>10</x>
-             <y>240</y>
+             <y>220</y>
              <width>181</width>
              <height>24</height>
             </rect>
@@ -1116,7 +1131,7 @@
            <property name="geometry">
             <rect>
              <x>10</x>
-             <y>170</y>
+             <y>150</y>
              <width>181</width>
              <height>41</height>
             </rect>
@@ -1126,7 +1141,7 @@
 color: rgb(70, 70, 70);</string>
            </property>
            <property name="text">
-            <string>Hint: Drag tile to generator window to set permanent tiles</string>
+            <string>Hint: Drag a tile to generator window to set permanent tiles</string>
            </property>
            <property name="textFormat">
             <enum>Qt::AutoText</enum>

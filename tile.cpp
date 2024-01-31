@@ -33,15 +33,6 @@ void TileGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     Q_UNUSED(widget);
     if(opacity < 1.0) painter->setOpacity(opacity);
     painter->drawPixmap(this->boundingRect().toRect(), this->refTile.pixmap);
-    /*
-    if(refTiles.size() <= 1)
-
-    else{
-
-        for(const auto &t:refTiles)
-            painter->drawPixmap(this->boundingRect().toRect(), t.pixmap); //is there a pixmap blend?
-        }
-    */
 }
 void TileGraphicsItem::dragEnterEvent(QGraphicsSceneDragDropEvent* e){
     qDebug()<<"test tgi drageEnter event";
