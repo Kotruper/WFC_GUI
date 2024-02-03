@@ -1235,7 +1235,7 @@ color: rgb(70, 70, 70);</string>
               <string>Loop X pos</string>
              </property>
              <property name="checked">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -1245,7 +1245,7 @@ color: rgb(70, 70, 70);</string>
               <string>Loop Y pos</string>
              </property>
              <property name="checked">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
             </widget>
            </item>

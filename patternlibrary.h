@@ -24,7 +24,7 @@ class PatternLibrary : public QObject
 public:
     explicit PatternLibrary(QComboBox *patternSelector, QGraphicsView *patternView,QComboBox *tileSelector, QGraphicsView *tileView, QObject *parent = nullptr);
 
-    bool patternsTabSelected = true;
+    bool patternsTabSelected = false;
 
     QList<Tile> originalTiles;
     QList<Tile> tiles;

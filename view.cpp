@@ -76,23 +76,24 @@ void GraphicsView::dropEvent(QDropEvent *event){
         emit sendTileId(event->mimeData()->text().toInt(), event->position());
         event->accept(); //hope to propagate to children?
     }
-    QWidget::dropEvent(event);
+    QGraphicsView::dropEvent(event);
 }
 
 void GraphicsView::dragMoveEvent(QDragMoveEvent *event){
     //qDebug()<<"GV, move event";
-    QWidget::dragMoveEvent(event);
+    QGraphicsView::dragMoveEvent(event);
 }
 
 void GraphicsView::dragEnterEvent(QDragEnterEvent *event){
-    //qDebug()<<"GV, Drag Enter event received";
+    qDebug()<<"GV, Drag Enter event received";
     event->accept();
-    QWidget::dragEnterEvent(event);
+    QGraphicsView::dragEnterEvent(event);
 }
 void GraphicsView::mouseReleaseEvent(QMouseEvent *event){
     if(event->button() == Qt::RightButton){
         emit sendTileId(-1,event->pos());
     }
+    QGraphicsView::mouseReleaseEvent(event);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

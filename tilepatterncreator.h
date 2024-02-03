@@ -19,7 +19,7 @@ public:
     QImage baseImage;
     int tileSize;
     int patternSize;
-    WallPos wallPos = WallPos::BothWall; //both walls means no perceived looping
+    WallPos wallPos = WallPos::None; //both walls means no perceived looping
 
 signals:
     void patternsSignal(QList<Tile> tiles, QList<Pattern> patterns, WallPos wallPos);

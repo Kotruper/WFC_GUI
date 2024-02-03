@@ -91,6 +91,7 @@ class WaveFunctionThread : public QThread
 public:
     explicit WaveFunctionThread(const QList<TileSlot> &starterGrid,
                                 const QList<Pattern> &patterns,
+                                const QList<Tile> &tiles,
                                 int gridWidth,
                                 int gridHeight,
                                 int iters,
@@ -108,6 +109,7 @@ private:
     QList<TileSlot> starterGrid;
     QList<TileSlot> grid;
     QList<Pattern> patterns;
+    QList<Tile> tiles;
     QList<QPoint> collapseCandidatePos;
     QList<QPoint> startingCandidatePos;
     WallPos wallPos;
@@ -115,7 +117,7 @@ private:
 
     QPoint getSlotToCollapse();
     bool generateGridStep(); //the big one. makes false if something failed
-    void collapseSlot(const QPoint &slotPos, const QList<Pattern> &patterns); //collapses a slot using weighted random. returns pattern id (should use tile weights too?)
+    void collapseSlot(const QPoint &slotPos, const QList<Pattern> &patterns, const QList<Tile> &tiles); //collapses a slot using weighted random. returns pattern id (should use tile weights too?)
     QList<QPoint> propagateUpdate(const QPoint &collapsed, const QList<Pattern> &patterns);
     TileSlot& getSlotRefAt(const QPoint &pos);
 

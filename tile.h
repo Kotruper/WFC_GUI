@@ -49,6 +49,7 @@ public:
     QImage image;
     QPixmap pixmap;
     bool isWall = false;
+    qreal originalWeight = 1.0;
 
     void incrementWeight(int incVal = 1);
     virtual void setWeight(qreal newWeight) override;

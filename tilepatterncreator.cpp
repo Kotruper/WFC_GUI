@@ -67,7 +67,7 @@ void TilePatternCreator::extractPatterns(){
     creatorView->view()->scene()->addPixmap(QPixmap::fromImage(baseImage));
     //lock ui except for cancel or smth
 
-    auto activeTilePatternThread = new TilePatternThread(this,this); //currently not deleted?
+    auto activeTilePatternThread = new TilePatternThread(this,this);
 
     connect(activeTilePatternThread, &TilePatternThread::sendTiles, this, &TilePatternCreator::updateTiles);
     connect(activeTilePatternThread, &TilePatternThread::sendPatterns, this, &TilePatternCreator::updatePatterns);

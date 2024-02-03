@@ -1,4 +1,5 @@
 #include "wavefunctioncollapser.h"
+#include "qdatetime.h"
 #include "qgraphicssceneevent.h"
 #include "qmimedata.h"
 #include "qtimer.h"
@@ -239,7 +240,7 @@ void WaveFunctionCollapser::generate(int iters){
     const int collapserGridHeight = ((bool)(wallPos & WallPos::BottomWall)) ? (gridHeight + wallWidth) : (gridHeight);
     const int collapserGridWidth = ((bool)(wallPos & WallPos::RightWall)) ? (gridWidth + wallWidth) : (gridWidth);
 
-    auto activeCollapserThread = new WaveFunctionThread(grid, patterns, collapserGridWidth, collapserGridHeight, iters, collapseCandidatePos, seed, wallPos, this); //currently not deleted?
+    auto activeCollapserThread = new WaveFunctionThread(grid, patterns, tiles, collapserGridWidth, collapserGridHeight, iters, collapseCandidatePos, seed, wallPos, this); //currently not deleted?
     this->wfc_thread = activeCollapserThread;
 
     connect(activeCollapserThread, &WaveFunctionThread::sendGrid, this, &WaveFunctionCollapser::updateGrid);
@@ -320,8 +321,8 @@ void WaveFunctionCollapser::setUIEnabled(bool enabled){
 
 ///////////////////////////////////////////////////////
 
-WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, int gridWidth, int gridHeight, int iters, QList<QPoint> candidates, int seed, WallPos wallPos, QObject *parent)
-    : QThread{parent}, starterGrid(starterGrid), patterns(patterns), gridHeight(gridHeight), gridWidth(gridWidth), iters(iters), collapseCandidatePos(candidates), seed(seed), wallPos(wallPos)
+WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const QList<Pattern> &patterns, const QList<Tile> &tiles, int gridWidth, int gridHeight, int iters, QList<QPoint> candidates, int seed, WallPos wallPos, QObject *parent)
+    : QThread{parent}, starterGrid(starterGrid), patterns(patterns), tiles(tiles), gridHeight(gridHeight), gridWidth(gridWidth), iters(iters), collapseCandidatePos(candidates), seed(seed), wallPos(wallPos)
 {
     this->grid = starterGrid;
     //propagate Permanent
@@ -337,7 +338,7 @@ short weightedRandom(const QVarLengthArray<double> &weightLimits, int seed) {
     return std::distance(weightLimits.begin(), it) - 1;
 }
 
-void WaveFunctionThread::collapseSlot(const QPoint &toCollapse, const QList<Pattern> &patterns){ //Weighted random TODO: will need to deal with empty slots)
+void WaveFunctionThread::collapseSlot(const QPoint &toCollapse, const QList<Pattern> &patterns, const QList<Tile> &tiles){ //Weighted random TODO: will need to deal with empty slots)
     TileSlot &slot = getSlotRefAt(toCollapse);
     if(slot.patternIdBitset.count(true) == 0){
         slot.collapsedId = -2; //I guess -2 means unsolvable?
@@ -348,7 +349,8 @@ void WaveFunctionThread::collapseSlot(const QPoint &toCollapse, const QList<Patt
     for(int id = 0; id < patterns.size(); id++){
         if(slot.patternIdBitset.testBit(id)){
             possibleIds.append(id);
-            weightLimits.append(patterns.at(id).weight + weightLimits.back());
+            double weight = (patterns.at(id).weight * tiles.at(patterns.at(id).tileIDs.first()).weight);
+            weightLimits.append(weight + weightLimits.back());
         }
     }
     short patternId = possibleIds[weightedRandom(weightLimits, this->seed)]; //TODO: will need to update, maybe
@@ -415,13 +417,13 @@ QList<QPoint> WaveFunctionThread::propagateUpdate(const QPoint &collapsed, const
             }
         }
     }
-    updatedSlots.pop_front(); //remove the collapsed TileSlot. Necessary. May need to keep track of updated slots somehow
+    //updatedSlots.pop_front(); //remove the collapsed TileSlot. Necessary. May need to keep track of updated slots somehow
 
     return updatedSlots; //test this whole thing
 }
 
-QPoint WaveFunctionThread::getSlotToCollapse(){
-    if(collapseCandidatePos.size() > 0){
+QPoint WaveFunctionThread::getSlotToCollapse(){ //TEST
+    if(collapseCandidatePos.size() > 10000){
         std::sort(collapseCandidatePos.begin(), collapseCandidatePos.end(),
                   [&](const QPoint &a, const QPoint &b){
             return getSlotRefAt(a) > getSlotRefAt(b);
@@ -447,14 +449,16 @@ bool WaveFunctionThread::generateGridStep(){
     if(toCollapse == QPoint{-1,-1}) //all are collapsed
         return true;
 
-    collapseSlot(toCollapse, patterns);
+    collapseSlot(toCollapse, patterns, tiles);
+    propagateUpdate(toCollapse, patterns);
 
-    const auto updatedSlots = propagateUpdate(toCollapse, patterns);
-
+/*
+ * const auto updatedSlots =
     for(const auto &pos:updatedSlots){
         if(collapseCandidatePos.contains(pos)) continue;
         collapseCandidatePos.append(pos);
     }
+*/
     return true;
 }
 
@@ -467,6 +471,7 @@ void WaveFunctionThread::run(){
     this->starterGrid = this->grid;
     this->startingCandidatePos = this->collapseCandidatePos;
     int remainingAttempts = this->attemptLimit;
+    auto startTime = QTime::currentTime();
     while(remainingAttempts > 0){
         try{
             for(int i = 0; i < this->iters; i++){
@@ -475,6 +480,8 @@ void WaveFunctionThread::run(){
             }
             if(!this->isInterruptionRequested()){//or if generation failed/gave unsolvable
                 emit finishedSuccessfully(this->collapseCandidatePos);
+                auto endTime = QTime::currentTime();
+                qDebug()<<"Time needed to collapse "<<iters<<"tiles: "<<(startTime.msecsTo(endTime))<<"ms";
                 return;
             }
         }
@@ -482,7 +489,7 @@ void WaveFunctionThread::run(){
             qDebug()<<"Unsolvable pos found, attempting again. Remaining attempts: "<<remainingAttempts;
             remainingAttempts--;
             this->grid = starterGrid;
-            this->collapseCandidatePos = startingCandidatePos;
+            //this->collapseCandidatePos = startingCandidatePos;
             continue;
         }
         return;

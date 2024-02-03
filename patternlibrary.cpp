@@ -16,7 +16,7 @@ void TileScene::mousePressEvent(QGraphicsSceneMouseEvent *event){
 
         mimeData->setText(QString{"%1"}.arg(selectedTile.id));
         drag->setMimeData(mimeData);
-        drag->setPixmap(selectedTile.pixmap);
+        drag->setPixmap(selectedTile.pixmap.scaled(16,16));
 
         Qt::DropAction dropAction = drag->exec();
     }

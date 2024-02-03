@@ -45,12 +45,12 @@ Tile::Tile(int id, QImage image, int size, qreal weight)
     this->pixmap = QPixmap::fromImage(image);
 }
 
-void Tile::setWeight(qreal newWeight){
+void Tile::setWeight(qreal newWeight){ //weight multiplier
     this->weight = newWeight;
 }
 
-void Tile::incrementWeight(int n){
-    this->weight+=n;
+void Tile::incrementWeight(int n){ //actual weight
+    this->originalWeight+=n;
 }
 
 const Tile Tile::getWallTile(int tileSize){
