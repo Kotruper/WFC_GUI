@@ -36,6 +36,7 @@ PatternLibrary::PatternLibrary(QComboBox *patternSelector, QGraphicsView *patter
     connect(tileSelector, &QComboBox::activated, this, &PatternLibrary::showElementInfo);
 
     QTimer::singleShot(100, [&](){emit setUIEnabled(false);}); //funky workaround :)))
+    tileView->setCursor(QCursor(Qt::CursorShape::OpenHandCursor));
 }
 
 LibraryElement& PatternLibrary::getElementRefAt(int id){

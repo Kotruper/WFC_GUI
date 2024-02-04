@@ -2,6 +2,7 @@
 #define WFC_GUI_H
 
 #include <QWidget>
+#include "qerrormessage.h"
 #include "tile.h"
 #include "tilepatterncreator.h"
 #include "wavefunctioncollapser.h"
@@ -45,5 +46,6 @@ private:
     TilePatternCreator* tpCreator;
     WaveFunctionCollapser* wfc_generator;
     PatternLibrary* p_library;
+    QErrorMessage* errMsg;
 };
 #endif // WFC_GUI_H

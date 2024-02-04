@@ -2,6 +2,7 @@
 #define WAVEFUNCTIONCOLLAPSER_H
 
 #include "qmutex.h"
+#include "qrandom.h"
 #include "qthread.h"
 #include "tile.h"
 #include "view.h"
@@ -81,6 +82,8 @@ public slots:
 signals:
     void setEnabledButtons(bool enabled);
     void toggleGenerateCancelButton(QString name);
+    void setWFCEnabled(bool enabled);
+    void displayError(const QString &error);
 
 };
 
@@ -114,6 +117,7 @@ private:
     QList<QPoint> startingCandidatePos;
     WallPos wallPos;
     QMutex mutex;
+    QRandomGenerator randomGenerator;
 
     QPoint getSlotToCollapse();
     bool generateGridStep(); //the big one. makes false if something failed
@@ -129,6 +133,7 @@ public:
 signals:
     void sendGrid(QList<TileSlot>); //might instead change to accessing the grid within, and send updates to read and render
     void finishedSuccessfully(QList<QPoint>); //add finished status? rn sends future candidates, might move to new function
+    void displayError(const QString &error);
 };
 
 #endif // WAVEFUNCTIONCOLLAPSER_H

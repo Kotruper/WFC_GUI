@@ -7,7 +7,7 @@ TilePatternCreator::TilePatternCreator(View *view, QObject *parent)
     setTileSize(1);
     setPatternSize(3);
 
-    creatorView->view()->setAcceptDrops(true);
+    //creatorView->view()->setAcceptDrops(true);
     connect((GraphicsView*)creatorView->view(), &GraphicsView::sendFile, this, &TilePatternCreator::setImage);
 }
 
@@ -55,6 +55,7 @@ void TilePatternCreator::updatePatterns(QList<Pattern> newPatterns){
 
 void TilePatternCreator::setImage(QString filename){ //will need some changes for the wall, maybe here or in tiledRead?
     //qDebug()<<"TPC file get, "<<filename;
+    if(filename.isEmpty()) return; //dont do anything if nothing selected
     auto currentScene = creatorView->view()->scene();
     currentScene->clear();
     this->baseImage.load(filename);

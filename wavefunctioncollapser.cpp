@@ -38,6 +38,7 @@ WaveFunctionCollapser::WaveFunctionCollapser(View *generatorView, QObject *paren
     updateGridTimer->setInterval(500); //10/sec at first
     connect(updateGridTimer, &QTimer::timeout, this, &WaveFunctionCollapser::updateGrid);
     connect((GraphicsView*)generatorView->view(), &GraphicsView::sendTileId, this, &WaveFunctionCollapser::receiveDroppedTile);
+    QTimer::singleShot(100, [&](){emit setWFCEnabled(false);});
 }
 
 QBitArray WaveFunctionCollapser::getWallPatterns(const QList<Pattern> &patterns, const QList<Tile> &tiles, const WallPos &wallPos){
@@ -80,6 +81,7 @@ QList<TileSlot> WaveFunctionCollapser::createEmptyGrid(int width, int height){ /
 void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList<Tile> &tiles, int width, int height){
     auto scene = this->generatorView->view()->scene();
     scene->clear(); //Needed?
+    if(tiles.empty()) return;
     int tileSize = tiles.first().size;
     bool skipWall = tiles.first().isWall;
     bool includeText = false;
@@ -158,6 +160,7 @@ void WaveFunctionCollapser::displayGrid(const QList<TileSlot> &grid, const QList
         if(item == nullptr) continue;
         item->setPos(ts.pos * tileSize);
         item->setAcceptDrops(true); //EDIT, maybe?
+        if(ts.permamentTileId > -1) item->setCursor(QCursor(Qt::CursorShape::PointingHandCursor)); //hoped it'd work
         gridDisplay->addToGroup(item);
         //qDebug()<<tiles[ts.collapsedId].id;
     }
@@ -185,7 +188,7 @@ QBitArray WaveFunctionCollapser::getAllowedPatterns(const QList<Pattern> &patter
     }
 
     //if(wallPos > WallPos::None) enabledPatterns &= ~getWallPatterns(patterns,tiles,wallPos);//if walls are enabled, remove wall patterns from regular tiles
-    //problem: loses dissalowed wall pattern info
+    //problem: loses dissallowed wall pattern info
     return enabledPatterns;
 }
 
@@ -194,6 +197,8 @@ void WaveFunctionCollapser::setPatterns(QList<Tile> newTiles, QList<Pattern> new
     this->patterns = newPatterns;
     this->wallPos = wallPos;
     this->allowedPatterns = getAllowedPatterns(patterns, tiles); //calculates the initial pattern state
+
+    emit setWFCEnabled(patterns.size() > 0);
 
     clearGrid();
     qDebug()<<"Received tiles ("<<newTiles.size()<<") and patterns("<<newPatterns.size()<<")";
@@ -212,8 +217,8 @@ void WaveFunctionCollapser::changeGridWidth(int val){
 }
 
 void WaveFunctionCollapser::clearGrid(){
-    if(patterns.empty() || tiles.empty()) //maybe put out an exception? send an error signal?
-        return;
+    //if(patterns.empty() || tiles.empty()) //maybe put out an exception? send an error signal?
+        //return;
 
     this->grid = createEmptyGrid(gridWidth, gridHeight);
     this->generatorView->view()->scene()->clear();
@@ -244,7 +249,7 @@ void WaveFunctionCollapser::generate(int iters){
     this->wfc_thread = activeCollapserThread;
 
     connect(activeCollapserThread, &WaveFunctionThread::sendGrid, this, &WaveFunctionCollapser::updateGrid);
-    //connect(activeCollapserThread, &WaveFunctionThread::sendPatterns, this, &TilePatternCreator::updatePatterns);
+    connect(activeCollapserThread, &WaveFunctionThread::displayError, this, &WaveFunctionCollapser::displayError);
     connect(activeCollapserThread, &WaveFunctionThread::finishedSuccessfully, this, &WaveFunctionCollapser::saveCandidates);
     connect(activeCollapserThread, &WaveFunctionThread::finished, this, &WaveFunctionCollapser::handleThreadEnd);
     connect(activeCollapserThread, &WaveFunctionThread::finished, activeCollapserThread, &WaveFunctionThread::deleteLater);
@@ -325,14 +330,11 @@ WaveFunctionThread::WaveFunctionThread(const QList<TileSlot> &starterGrid, const
     : QThread{parent}, starterGrid(starterGrid), patterns(patterns), tiles(tiles), gridHeight(gridHeight), gridWidth(gridWidth), iters(iters), collapseCandidatePos(candidates), seed(seed), wallPos(wallPos)
 {
     this->grid = starterGrid;
+    this->randomGenerator = QRandomGenerator().securelySeeded();
     //propagate Permanent
 }
 
-short weightedRandom(const QVarLengthArray<double> &weightLimits, int seed) {
-    static auto gen = QRandomGenerator().securelySeeded();
-    if(seed > -1)
-        gen.seed(seed);
-
+short weightedRandom(const QVarLengthArray<double> &weightLimits, QRandomGenerator &gen) {
     double randomWeight = gen.bounded(weightLimits.last()); //TODO: add random seed
     auto it = std::upper_bound(weightLimits.begin(), weightLimits.end(), randomWeight);
     return std::distance(weightLimits.begin(), it) - 1;
@@ -353,7 +355,7 @@ void WaveFunctionThread::collapseSlot(const QPoint &toCollapse, const QList<Patt
             weightLimits.append(weight + weightLimits.back());
         }
     }
-    short patternId = possibleIds[weightedRandom(weightLimits, this->seed)]; //TODO: will need to update, maybe
+    short patternId = possibleIds[weightedRandom(weightLimits, this->randomGenerator)]; //TODO: will need to update, maybe
     slot.collapsedId = patternId;
     slot.patternIdBitset.fill(false);
     slot.patternIdBitset.setBit(patternId);
@@ -472,6 +474,7 @@ void WaveFunctionThread::run(){
     this->startingCandidatePos = this->collapseCandidatePos;
     int remainingAttempts = this->attemptLimit;
     auto startTime = QTime::currentTime();
+    if(this->seed > -1) randomGenerator.seed(this->seed);
     while(remainingAttempts > 0){
         try{
             for(int i = 0; i < this->iters; i++){
@@ -494,4 +497,5 @@ void WaveFunctionThread::run(){
         }
         return;
     }
+    emit displayError("Ran out of generation attempts! Change tile/pattern size or settings for better results or try again.");
 }

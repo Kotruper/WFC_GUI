@@ -490,7 +490,7 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
+       <layout class="QVBoxLayout" name="wfc_settings_frame">
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
@@ -523,6 +523,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Controls the width of the output image.</string>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -542,6 +545,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Controls the width of the output image.</string>
+            </property>
             <property name="text">
              <string>Result Tile Width</string>
             </property>
@@ -554,6 +560,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Controls the height of the output image.</string>
             </property>
             <property name="minimum">
              <number>1</number>
@@ -571,6 +580,9 @@
           </item>
           <item row="2" column="0">
            <widget class="QLabel" name="label_3">
+            <property name="toolTip">
+             <string>Controls the width of the output image.</string>
+            </property>
             <property name="text">
              <string>Result Tile Height</string>
             </property>
@@ -583,6 +595,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Controls the seed used to generate the output image. The same value will result in the same image.</string>
+            </property>
+            <property name="specialValueText">
+             <string>[Random]</string>
             </property>
             <property name="minimum">
              <number>-1</number>
@@ -597,6 +615,9 @@
           </item>
           <item row="3" column="0">
            <widget class="QLabel" name="seedLabel">
+            <property name="toolTip">
+             <string>Controls the seed used to generate the output image. The same value will result in the same image.</string>
+            </property>
             <property name="text">
              <string>Seed</string>
             </property>
@@ -611,6 +632,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Generates the output image. May fail if pattern size is too big, image is too complex, permament tiles are set in the wrong position, important tiles or patterns are turned off.</string>
           </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -628,6 +652,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Generates the output image. May fail if pattern size is too big, image is too complex, permament tiles are set in the wrong position, important tiles or patterns are turned off.</string>
+          </property>
           <property name="text">
            <string>Generate Step</string>
           </property>
@@ -644,6 +671,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Clears the image grid to uncollapsed tiles. Allows setting permament tiles.</string>
+          </property>
           <property name="text">
            <string>Clear</string>
           </property>
@@ -653,6 +683,9 @@
          <widget class="QPushButton" name="cancelGenerateButton">
           <property name="enabled">
            <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>Cancels the current generation.</string>
           </property>
           <property name="text">
            <string>Cancel</string>
@@ -689,6 +722,9 @@ color: rgb(70, 70, 70);</string>
         </item>
         <item>
          <widget class="QPushButton" name="saveImageButton">
+          <property name="toolTip">
+           <string>Opens a window for saving the current image</string>
+          </property>
           <property name="text">
            <string>Save Image</string>
           </property>
@@ -769,7 +805,7 @@ color: rgb(70, 70, 70);</string>
          </size>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -845,6 +881,9 @@ color: rgb(70, 70, 70);</string>
              <height>24</height>
             </rect>
            </property>
+           <property name="toolTip">
+            <string>Contains the list of tiles extracted from the image.</string>
+           </property>
            <property name="currentText">
             <string/>
            </property>
@@ -870,6 +909,9 @@ color: rgb(70, 70, 70);</string>
             </property>
             <item row="1" column="0">
              <widget class="QLabel" name="weightLabel">
+              <property name="toolTip">
+               <string>Controls the probability of a pattern being used in the output image.</string>
+              </property>
               <property name="text">
                <string>Weight</string>
               </property>
@@ -877,6 +919,9 @@ color: rgb(70, 70, 70);</string>
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="weightDoubleSpinBox">
+              <property name="toolTip">
+               <string>Controls the probability of a pattern being used in the output image.</string>
+              </property>
               <property name="minimum">
                <double>0.010000000000000</double>
               </property>
@@ -904,6 +949,9 @@ color: rgb(70, 70, 70);</string>
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Controls whether the pattern is used in generating the output image.</string>
               </property>
               <property name="text">
                <string>Enabled</string>
@@ -940,6 +988,9 @@ color: rgb(70, 70, 70);</string>
              <height>24</height>
             </rect>
            </property>
+           <property name="toolTip">
+            <string>Resets pattern settings to original values</string>
+           </property>
            <property name="text">
             <string>Reset Patterns</string>
            </property>
@@ -952,6 +1003,9 @@ color: rgb(70, 70, 70);</string>
              <width>181</width>
              <height>24</height>
             </rect>
+           </property>
+           <property name="toolTip">
+            <string>Sends modified tiles and patterns to the generator</string>
            </property>
            <property name="text">
             <string>Send to Generator</string>
@@ -1015,6 +1069,9 @@ color: rgb(70, 70, 70);</string>
              <height>24</height>
             </rect>
            </property>
+           <property name="toolTip">
+            <string>Contains the list of tiles extracted from the image.</string>
+           </property>
            <property name="currentText">
             <string/>
            </property>
@@ -1040,6 +1097,9 @@ color: rgb(70, 70, 70);</string>
             </property>
             <item row="1" column="0">
              <widget class="QLabel" name="weightLabel_2">
+              <property name="toolTip">
+               <string>Controls the probability of a tile being used in the output image.</string>
+              </property>
               <property name="text">
                <string>Weight</string>
               </property>
@@ -1047,6 +1107,9 @@ color: rgb(70, 70, 70);</string>
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="weightDoubleSpinBox_2">
+              <property name="toolTip">
+               <string>Controls the probability of a tile being used in the output image.</string>
+              </property>
               <property name="minimum">
                <double>0.010000000000000</double>
               </property>
@@ -1075,6 +1138,9 @@ color: rgb(70, 70, 70);</string>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>Controls whether the tile is used in generating the output image.</string>
+              </property>
               <property name="text">
                <string>Enabled</string>
               </property>
@@ -1100,6 +1166,9 @@ color: rgb(70, 70, 70);</string>
              <height>81</height>
             </rect>
            </property>
+           <property name="toolTip">
+            <string>Drag and drop this on a cleared image to set a permanent tile</string>
+           </property>
           </widget>
           <widget class="QPushButton" name="resetLibraryButton_2">
            <property name="geometry">
@@ -1109,6 +1178,9 @@ color: rgb(70, 70, 70);</string>
              <width>181</width>
              <height>24</height>
             </rect>
+           </property>
+           <property name="toolTip">
+            <string>Resets tile settings to original values</string>
            </property>
            <property name="text">
             <string>Reset Tiles</string>
@@ -1122,6 +1194,9 @@ color: rgb(70, 70, 70);</string>
              <width>181</width>
              <height>24</height>
             </rect>
+           </property>
+           <property name="toolTip">
+            <string>Sends modified tiles and patterns to the generator</string>
            </property>
            <property name="text">
             <string>Send to Generator</string>
@@ -1196,7 +1271,25 @@ color: rgb(70, 70, 70);</string>
            <item>
             <widget class="QSpinBox" name="tilePixelSizeInput">
              <property name="toolTip">
+              <string>The size of the base tile in pixels, shown by the blue grid.</string>
+             </property>
+             <property name="statusTip">
               <string/>
+             </property>
+             <property name="whatsThis">
+              <string/>
+             </property>
+             <property name="wrapping">
+              <bool>false</bool>
+             </property>
+             <property name="frame">
+              <bool>true</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>false</bool>
              </property>
              <property name="minimum">
               <number>1</number>
@@ -1221,6 +1314,9 @@ color: rgb(70, 70, 70);</string>
            </item>
            <item>
             <widget class="QSpinBox" name="patternSizeInput">
+             <property name="toolTip">
+              <string>The size of the base pattern in tiles, shown by the red grid. Values too big may result in impossible to generate images.</string>
+             </property>
              <property name="minimum">
               <number>2</number>
              </property>
@@ -1231,6 +1327,9 @@ color: rgb(70, 70, 70);</string>
            </item>
            <item>
             <widget class="QCheckBox" name="YWallCheckbox">
+             <property name="toolTip">
+              <string>Sets whether the left and right edges should connect to each other.</string>
+             </property>
              <property name="text">
               <string>Loop X pos</string>
              </property>
@@ -1241,6 +1340,9 @@ color: rgb(70, 70, 70);</string>
            </item>
            <item>
             <widget class="QCheckBox" name="XWallCheckbox">
+             <property name="toolTip">
+              <string>Sets whether the top and bottom edges should connect to each other.</string>
+             </property>
              <property name="text">
               <string>Loop Y pos</string>
              </property>
@@ -1273,6 +1375,9 @@ color: rgb(70, 70, 70);</string>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>Opens the input image selection menu.</string>
+             </property>
              <property name="text">
               <string>Select Image</string>
              </property>
@@ -1280,6 +1385,9 @@ color: rgb(70, 70, 70);</string>
            </item>
            <item>
             <widget class="QPushButton" name="extractPatternsButton">
+             <property name="toolTip">
+              <string>Extracts the tiles and patterns from the input image. Press when altering image, tile size, pattern size or looping rules.</string>
+             </property>
              <property name="autoFillBackground">
               <bool>false</bool>
              </property>

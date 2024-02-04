@@ -54,11 +54,12 @@ void Tile::incrementWeight(int n){ //actual weight
 }
 
 const Tile Tile::getWallTile(int tileSize){
-    QImage img{tileSize,tileSize,QImage::Format_ARGB32};
+    QImage img{tileSize, tileSize, QImage::Format_ARGB32};
+    img.fill(Qt::transparent);
     QPainter paint{&img};
     paint.setPen(QPen(QBrush(Qt::red,Qt::BrushStyle::SolidPattern),0));
-    paint.drawLine(0,0,tileSize,tileSize);
-    paint.drawLine(0,tileSize,tileSize,0);
+    paint.drawLine(0,0,tileSize-1,tileSize-1);
+    paint.drawLine(0,tileSize-1,tileSize-1,0);
     Tile wallTile(0,img,tileSize);
     wallTile.isWall = true;
 
@@ -196,26 +197,3 @@ void PatternGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsIte
         painter->drawPixmap(offset, tileToDraw.pixmap);
     }
 }
-/*
-void Chip::mousePressEvent(QGraphicsSceneMouseEvent *event)
-{
-    QGraphicsItem::mousePressEvent(event);
-    update();
-}
-
-void Chip::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
-{
-    if (event->modifiers() & Qt::ShiftModifier) {
-        stuff << event->pos();
-        update();
-        return;
-    }
-    QGraphicsItem::mouseMoveEvent(event);
-}
-
-void Chip::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-{
-    QGraphicsItem::mouseReleaseEvent(event);
-    update();
-}
-*/

@@ -31,6 +31,8 @@ WFC_GUI::WFC_GUI(QWidget *parent)
 
     p_library = new PatternLibrary(ui->patternSelector, ui->patternDisplay, ui->tileSelector, ui->tileDisplay, this);
 
+    errMsg = new QErrorMessage(this);
+
     //connect(ui->generateTilesButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createTiles);
     //connect(ui->generatePatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::createPatterns);
     connect(ui->extractPatternsButton, &QPushButton::clicked, tpCreator, &TilePatternCreator::extractPatterns);
@@ -51,6 +53,7 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(wfc_generator, &WaveFunctionCollapser::setEnabledButtons, ui->clearGridButton, &QPushButton::setEnabled);
     connect(wfc_generator, &WaveFunctionCollapser::setEnabledButtons, ui->generateGridButton, &QPushButton::setEnabled);
     connect(wfc_generator, &WaveFunctionCollapser::setEnabledButtons, ui->cancelGenerateButton, &QPushButton::setDisabled);
+    connect(wfc_generator, &WaveFunctionCollapser::setWFCEnabled, ui->topFrame, &QFrame::setEnabled);
 
     connect(tpCreator, &TilePatternCreator::patternsSignal, p_library, &PatternLibrary::setTilesPatterns);
     connect(ui->libraryTabs, &QTabWidget::currentChanged, p_library, &PatternLibrary::setSelectedTab);
@@ -68,6 +71,8 @@ WFC_GUI::WFC_GUI(QWidget *parent)
     connect(ui->librarySendPatternsButton_2, &QPushButton::clicked, p_library, &PatternLibrary::sendOutTilesPatterns);
     connect(p_library, &PatternLibrary::sendTilesPatterns, wfc_generator, &WaveFunctionCollapser::setPatterns);
     connect(p_library, &PatternLibrary::setUIEnabled, ui->libraryTabs, &QTabWidget::setEnabled);
+
+    connect(wfc_generator, &WaveFunctionCollapser::displayError, errMsg, qOverload<const QString&>(&QErrorMessage::showMessage));
 
     connect(ui->saveImageButton, &QPushButton::clicked, this, &WFC_GUI::saveGeneratedImage);
 }

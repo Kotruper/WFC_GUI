@@ -80,7 +80,8 @@ void GraphicsView::dropEvent(QDropEvent *event){
 }
 
 void GraphicsView::dragMoveEvent(QDragMoveEvent *event){
-    //qDebug()<<"GV, move event";
+    qDebug()<<"GV, move event";
+    event->accept();
     QGraphicsView::dragMoveEvent(event);
 }
 
@@ -111,6 +112,7 @@ View::View(QWidget *parent)
     graphicsView->setViewportUpdateMode(QGraphicsView::FullViewportUpdate); //test. Seems pretty good for this, as there are a lot of small updates
     graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     //graphicsView->setBackgroundBrush(QBrush(Qt::BrushStyle::Dense7Pattern));
+    graphicsView->setInteractive(false);
 
     int size = style()->pixelMetric(QStyle::PM_ToolBarIconSize);
     QSize iconSize(size, size);
@@ -193,20 +195,7 @@ void View::setupMatrix()
     graphicsView->setTransform(matrix);
     setResetButtonEnabled();
 }
-/*
-void View::togglePointerMode()
-{
-    graphicsView->setDragMode(selectModeButton->isChecked()
-                              ? QGraphicsView::RubberBandDrag
-                              : QGraphicsView::ScrollHandDrag);
-    graphicsView->setInteractive(selectModeButton->isChecked());
-}
 
-void View::toggleAntialiasing()
-{
-    graphicsView->setRenderHint(QPainter::Antialiasing, antialiasButton->isChecked());
-}
-*/
 void View::zoomIn()
 {
     zoomSlider->setValue(zoomSlider->value() + 1);
@@ -226,21 +215,3 @@ void View::zoomOutBy(int level)
 {
     zoomSlider->setValue(zoomSlider->value() - level);
 }
-/*
-void View::dropEvent(QDropEvent *event){
-    qDebug()<<"V, Drop event received"<<event->mimeData();
-    QWidget::dropEvent(event);
-}
-
-void View::dragMoveEvent(QDragMoveEvent *event){
-    return;
-    qDebug()<<"Drag Move event received";
-    QWidget::dragMoveEvent(event);
-}
-
-void View::dragEnterEvent(QDragEnterEvent *event){
-    qDebug()<<"V, Drag Enter event received";
-    event->accept();
-    QWidget::dragEnterEvent(event);
-}
-*/
